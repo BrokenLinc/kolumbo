@@ -1,0 +1,21 @@
+{
+    "version": "0.2",
+    "ignorePaths": [],
+    "dictionaryDefinitions": [],
+    "dictionaries": [],
+    "words": [
+        "boxshadow",
+        "chakra",
+        "connectingfrom",
+        "connectingto",
+        "connectionindicator",
+        "elkjs",
+        "kolumbo",
+        "xyflow"
+    ],
+    "ignoreWords": [
+        "Layouted",
+        "layouting"
+    ],
+    "import": []
+}

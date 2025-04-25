@@ -1,0 +1,104 @@
+const position = { x: 0, y: 0 };
+
+export const initialNodes = [
+  {
+    id: "1",
+    type: "input",
+    data: { label: "input" },
+    position,
+  },
+  {
+    id: "2",
+    data: { label: "node 2" },
+    position,
+  },
+  {
+    id: "2a",
+    data: { label: "node 2a" },
+    position,
+  },
+  {
+    id: "2b",
+    data: { label: "node 2b" },
+    position,
+  },
+  {
+    id: "2c",
+    data: { label: "node 2c" },
+    position,
+  },
+  {
+    id: "2d",
+    data: { label: "node 2d" },
+    position,
+  },
+  {
+    id: "3",
+    data: { label: "node 3" },
+    position,
+  },
+  {
+    id: "4",
+    data: { label: "node 4" },
+    position,
+  },
+  {
+    id: "5",
+    data: { label: "node 5" },
+    position,
+  },
+  {
+    id: "6",
+    type: "output",
+    data: { label: "output" },
+    position,
+  },
+  { id: "7", type: "output", data: { label: "output" }, position },
+];
+
+export const initialEdges = [
+  { id: "e12", source: "1", target: "2", type: "smoothstep" },
+  { id: "e13", source: "1", target: "3", type: "smoothstep" },
+  { id: "e22a", source: "2", target: "2a", type: "smoothstep" },
+  { id: "e22b", source: "2", target: "2b", type: "smoothstep" },
+  { id: "e22c", source: "2", target: "2c", type: "smoothstep" },
+  { id: "e2c2d", source: "2c", target: "2d", type: "smoothstep" },
+  { id: "e45", source: "4", target: "5", type: "smoothstep" },
+  { id: "e56", source: "5", target: "6", type: "smoothstep" },
+  { id: "e57", source: "5", target: "7", type: "smoothstep" },
+];
+
+const test_animals = {
+  nodes: [
+    { id: "1", label: "Zebra" },
+    { id: "2", label: "Horse" },
+    { id: "3", label: "Mammal" },
+    { id: "4", label: "Animal" },
+  ],
+  edges: [
+    { id: "e13", source: "1", target: "3", label: "is a" },
+    { id: "e23", source: "2", target: "3", label: "is a" },
+    { id: "e34", source: "3", target: "4", label: "is a" },
+  ],
+};
+
+export const convertTextToGraph = (v: string) => {
+  const object = JSON.parse(v);
+  return {
+    nodes: object.nodes.map(({ label, ...v }: any) => ({
+      ...v,
+      position,
+      data: { label },
+    })),
+    edges: object.edges.map((v: any) => ({ ...v })),
+  };
+};
+
+export const sample_animals = {
+  nodes: test_animals.nodes.map(({ label, ...v }) => ({
+    ...v,
+    position,
+    data: { label },
+  })),
+  edges: test_animals.edges.map((v) => ({ ...v, type: "smoothstep" })),
+};
