@@ -10,5 +10,6 @@ export {
   Textarea,
   VStack,
   type BoxProps,
+  type TextareaProps,
 } from "@chakra-ui/react";
 export * from "./Provider";

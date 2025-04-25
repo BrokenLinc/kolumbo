@@ -1,5 +1,5 @@
-import { ChatGraph } from "@@components";
+import { GraphChat } from "@@components";
 
 export default function Home() {
-  return <ChatGraph />;
+  return <GraphChat />;
 }
