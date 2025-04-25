@@ -82,18 +82,6 @@ const test_animals = {
   ],
 };
 
-export const convertTextToGraph = (v: string) => {
-  const object = JSON.parse(v);
-  return {
-    nodes: object.nodes.map(({ label, ...v }: any) => ({
-      ...v,
-      position,
-      data: { label },
-    })),
-    edges: object.edges.map((v: any) => ({ ...v })),
-  };
-};
-
 export const sample_animals = {
   nodes: test_animals.nodes.map(({ label, ...v }) => ({
     ...v,

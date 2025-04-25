@@ -1,6 +1,6 @@
 "use client";
 
-import * as UI from "@ui";
+import * as UI from "@@ui";
 import {
   addEdge,
   Background,
@@ -11,11 +11,9 @@ import {
   useNodesState,
   useReactFlow,
 } from "@xyflow/react";
-import ELK from "elkjs/lib/elk.bundled.js";
-import { useCallback, useLayoutEffect } from "react";
-import { convertTextToGraph } from "./initialElements";
-
 import "@xyflow/react/dist/style.css";
+import ELK from "elkjs/lib/elk.bundled.js";
+import React from "react";
 
 const elk = new ELK();
 
@@ -30,12 +28,12 @@ const elkOptions = {
   "elk.spacing.nodeNode": "80",
 };
 
-const getLayoutedElements = (nodes, edges, options = {}) => {
+const getLayoutedElements = (nodes: any, edges: any, options: any = {}) => {
   const isHorizontal = options?.["elk.direction"] === "RIGHT";
   const graph = {
     id: "root",
     layoutOptions: options,
-    children: nodes.map((node) => ({
+    children: nodes.map((node: any) => ({
       ...node,
       // Adjust the target and source handle positions based on the layout
       // direction.
@@ -52,7 +50,7 @@ const getLayoutedElements = (nodes, edges, options = {}) => {
   return elk
     .layout(graph)
     .then((layoutedGraph) => ({
-      nodes: layoutedGraph.children.map((node) => ({
+      nodes: layoutedGraph.children?.map((node) => ({
         ...node,
         // React Flow expects a position property on the node instead of `x`
         // and `y` fields.
@@ -64,37 +62,23 @@ const getLayoutedElements = (nodes, edges, options = {}) => {
     .catch(console.error);
 };
 
-function LayoutFlow({ graphText }) {
-  let graph = undefined;
-  try {
-    graph = convertTextToGraph(graphText);
-
-    console.log(graph);
-  } catch (e) {
-    console.warn("json fail");
-    return null;
-  }
-
-  if (!graph) {
-    return null;
-  }
-
+const LayoutFlowInner: React.FC<{ graph: any }> = ({ graph }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { fitView } = useReactFlow();
 
-  const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
+  const onConnect = React.useCallback(
+    (params: any) => setEdges((eds: any) => addEdge(params, eds) as any),
     []
   );
-  const onLayout = useCallback(
-    ({ direction, useInitialNodes = false }) => {
+  const onLayout = React.useCallback(
+    ({ direction, useInitialNodes = false }: any) => {
       const opts = { "elk.direction": direction, ...elkOptions };
       const ns = useInitialNodes ? graph.nodes : nodes;
       const es = useInitialNodes ? graph.edges : edges;
 
       getLayoutedElements(ns, es, opts).then(
-        ({ nodes: layoutedNodes, edges: layoutedEdges }) => {
+        ({ nodes: layoutedNodes, edges: layoutedEdges }: any) => {
           setNodes(layoutedNodes);
           setEdges(layoutedEdges);
           fitView();
@@ -105,7 +89,7 @@ function LayoutFlow({ graphText }) {
   );
 
   // Calculate the initial layout on mount.
-  useLayoutEffect(() => {
+  React.useLayoutEffect(() => {
     onLayout({ direction: "DOWN", useInitialNodes: true });
   }, []);
 
@@ -120,23 +104,33 @@ function LayoutFlow({ graphText }) {
       style={{ backgroundColor: "#F7F9FB" }}
     >
       <Panel position="top-right">
-        <button onClick={() => onLayout({ direction: "DOWN" })}>
-          vertical layout
-        </button>
-
-        <button onClick={() => onLayout({ direction: "RIGHT" })}>
-          horizontal layout
-        </button>
+        <UI.HStack p={2}>
+          <UI.Button
+            variant="subtle"
+            onClick={() => onLayout({ direction: "DOWN" })}
+          >
+            Vertical layout
+          </UI.Button>
+          <UI.Button
+            variant="subtle"
+            onClick={() => onLayout({ direction: "RIGHT" })}
+          >
+            Horizontal layout
+          </UI.Button>
+        </UI.HStack>
       </Panel>
       <Background />
     </ReactFlow>
   );
-}
+};
 
-export const GraphExample = ({ initialGraphText, ...props }) => (
+export const Graph: React.FC<{ graph: any } & UI.BoxProps> = ({
+  graph,
+  ...props
+}) => (
   <UI.Box {...props}>
     <ReactFlowProvider>
-      <LayoutFlow key="initialGraphText" graphText={initialGraphText} />
+      <LayoutFlowInner graph={graph} />
     </ReactFlowProvider>
   </UI.Box>
 );

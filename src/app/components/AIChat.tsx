@@ -1,8 +1,8 @@
 "use client";
 
-import * as UI from "@ui";
+import * as UI from "@@ui";
+import { callAI } from "@@utils";
 import React from "react";
-import { callAISample } from ".";
 
 export const AIChat: React.FC<{ onResponse: (v: string) => any }> = ({
   onResponse,
@@ -10,7 +10,7 @@ export const AIChat: React.FC<{ onResponse: (v: string) => any }> = ({
   const [message, setMessage] = React.useState("");
 
   const handleButtonClick = async () => {
-    const response = await callAISample(message);
+    const response = await callAI(message);
     console.log(response);
     onResponse(response);
   };
@@ -29,7 +29,6 @@ export const AIChat: React.FC<{ onResponse: (v: string) => any }> = ({
         bottom={6}
         right={6}
         onClick={handleButtonClick}
-        size="xs"
       >
         Send
       </UI.Button>

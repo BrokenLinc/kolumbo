@@ -19,8 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@ui": ["./src/app/ui"]
+      "@@components": ["./src/app/components"],
+      "@@ui": ["./src/app/ui"],
+      "@@utils": ["./src/app/utils"]
     }
   },
   "include": [
@@ -28,7 +29,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/app/graph/GraphExample.jsx"
+    "src/app/graph/GraphExample.tsx"
   ],
   "exclude": ["node_modules"]
 }

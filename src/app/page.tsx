@@ -1,4 +1,4 @@
-import { ChatGraph } from "./chat-graph";
+import { ChatGraph } from "@@components";
 
 export default function Home() {
   return <ChatGraph />;
