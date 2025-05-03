@@ -1,3 +1,3 @@
 export * from "./callAI";
 export * from "./convertTextToGraph";
-export * from "./initialElements";
+export * from "./mockData";

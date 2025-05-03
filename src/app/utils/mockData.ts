@@ -1,74 +1,8 @@
+import { RawGraph } from "./types";
+
 const position = { x: 0, y: 0 };
 
-export const initialNodes = [
-  {
-    id: "1",
-    type: "input",
-    data: { label: "input" },
-    position,
-  },
-  {
-    id: "2",
-    data: { label: "node 2" },
-    position,
-  },
-  {
-    id: "2a",
-    data: { label: "node 2a" },
-    position,
-  },
-  {
-    id: "2b",
-    data: { label: "node 2b" },
-    position,
-  },
-  {
-    id: "2c",
-    data: { label: "node 2c" },
-    position,
-  },
-  {
-    id: "2d",
-    data: { label: "node 2d" },
-    position,
-  },
-  {
-    id: "3",
-    data: { label: "node 3" },
-    position,
-  },
-  {
-    id: "4",
-    data: { label: "node 4" },
-    position,
-  },
-  {
-    id: "5",
-    data: { label: "node 5" },
-    position,
-  },
-  {
-    id: "6",
-    type: "output",
-    data: { label: "output" },
-    position,
-  },
-  { id: "7", type: "output", data: { label: "output" }, position },
-];
-
-export const initialEdges = [
-  { id: "e12", source: "1", target: "2", type: "smoothstep" },
-  { id: "e13", source: "1", target: "3", type: "smoothstep" },
-  { id: "e22a", source: "2", target: "2a", type: "smoothstep" },
-  { id: "e22b", source: "2", target: "2b", type: "smoothstep" },
-  { id: "e22c", source: "2", target: "2c", type: "smoothstep" },
-  { id: "e2c2d", source: "2c", target: "2d", type: "smoothstep" },
-  { id: "e45", source: "4", target: "5", type: "smoothstep" },
-  { id: "e56", source: "5", target: "6", type: "smoothstep" },
-  { id: "e57", source: "5", target: "7", type: "smoothstep" },
-];
-
-const test_animals = {
+export const test_animals: RawGraph = {
   nodes: [
     { id: "1", label: "Zebra" },
     { id: "2", label: "Horse" },
@@ -82,11 +16,18 @@ const test_animals = {
   ],
 };
 
-export const sample_animals = {
-  nodes: test_animals.nodes.map(({ label, ...v }) => ({
-    ...v,
-    position,
-    data: { label },
-  })),
-  edges: test_animals.edges.map((v) => ({ ...v, type: "smoothstep" })),
+export const test_snacks: RawGraph = {
+  nodes: [
+    { id: "1", label: "Snack" },
+    { id: "2", label: "Chips" },
+    { id: "3", label: "Candy" },
+    { id: "4", label: "Doritos" },
+    { id: "5", label: "Lays" },
+  ],
+  edges: [
+    { id: "e21", source: "2", target: "1", label: "is a" },
+    { id: "e31", source: "3", target: "1", label: "is a" },
+    { id: "e42", source: "4", target: "2", label: "is a" },
+    { id: "e52", source: "5", target: "2", label: "is a" },
+  ],
 };

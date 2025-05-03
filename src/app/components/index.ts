@@ -1,3 +1,3 @@
-export * from "./AIChat";
-export * from "./ChatGraph";
-export * from "./Graph";
+export * from "./ChatInput";
+export * from "./GraphChat";
+export * from "./GraphView";
