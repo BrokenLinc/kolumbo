@@ -13,11 +13,11 @@ export const convertTextToGraph = (graphText: string): Graph => {
       nodes: object.nodes.map(({ label, ...v }: any) => ({
         ...v,
         position: defaultPosition,
-        data: { label: `${label} (${v.id})` },
+        // labels: [`${label} (${v.id})`],
       })),
       edges: object.edges.map((v: any) => ({
         ...v,
-        label: `${v.label} (${v.id})`,
+        // labels: [`${v.label} (${v.id})`],
       })),
     };
   } catch (e) {
