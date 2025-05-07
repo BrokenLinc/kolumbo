@@ -1,25 +1,11 @@
-import { Graph, GraphPosition } from "./types";
+import { RawGraph } from "./types";
 
-const defaultPosition: GraphPosition = { x: 0, y: 0 };
-
-export const convertTextToGraph = (graphText: string): Graph => {
+export const convertTextToGraph = (graphText: string): RawGraph => {
   if (!graphText.trim()) {
     return { nodes: [], edges: [] };
   }
   try {
-    const object = JSON.parse(graphText);
-
-    return {
-      nodes: object.nodes.map(({ label, ...v }: any) => ({
-        ...v,
-        position: defaultPosition,
-        // labels: [`${label} (${v.id})`],
-      })),
-      edges: object.edges.map((v: any) => ({
-        ...v,
-        // labels: [`${v.label} (${v.id})`],
-      })),
-    };
+    return JSON.parse(graphText);
   } catch (e) {
     return { nodes: [], edges: [] };
   }

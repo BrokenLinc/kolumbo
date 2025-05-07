@@ -5,6 +5,7 @@ export {
   Button,
   Flex,
   HStack,
+  Menu,
   Stack,
   Text,
   Textarea,

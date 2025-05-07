@@ -11,6 +11,9 @@
         "connectionindicator",
         "elkjs",
         "kolumbo",
+        "uidotdev",
+        "usehooks",
+        "uuidv",
         "xyflow"
     ],
     "ignoreWords": [
