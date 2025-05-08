@@ -3,6 +3,7 @@
 import * as UI from "@@ui";
 import { convertTextToGraph } from "@@utils";
 import ELK, { ElkEdgeSection, ElkNode } from "elkjs/lib/elk.bundled.js";
+import panzoom from "panzoom";
 import React from "react";
 import { RawGraph } from "../utils/types";
 
@@ -50,8 +51,7 @@ export const GraphView: React.FC<{ graphText: string } & UI.BoxProps> = ({
   ...props
 }) => {
   const [graph, setGraph] = React.useState<ElkNode>();
-
-  console.log(graph);
+  const draggableRootRef = React.useRef<SVGGElement>(null);
 
   React.useLayoutEffect(() => {
     const rawGraph = convertTextToGraph(graphText);
@@ -60,20 +60,26 @@ export const GraphView: React.FC<{ graphText: string } & UI.BoxProps> = ({
     });
   }, [graphText]);
 
+  React.useEffect(() => {
+    if (graph && draggableRootRef.current) {
+      panzoom(draggableRootRef.current);
+    }
+  }, [graph]);
+
   if (!graph) {
     return null;
   }
 
-  console.log(graph);
-
   return (
-    <UI.Box {...props}>
-      <UI.Box
-        as="svg"
-        w={`${graph.width}px`}
-        h={`${graph.height}px`}
-        bg="black"
-      >
+    <UI.Box
+      as="svg"
+      w="full"
+      // @ts-ignore
+      preserveAspectRatio="xMidYMid"
+      viewBox={`0 0 ${graph.width} ${graph.height}`}
+      {...props}
+    >
+      <g ref={draggableRootRef}>
         {graph.children?.map((node, i: number) => (
           <UI.Box
             key={i}
@@ -109,7 +115,7 @@ export const GraphView: React.FC<{ graphText: string } & UI.BoxProps> = ({
                       key={i}
                       as="path"
                       fill="none"
-                      stroke="purple.300"
+                      stroke="gray.700"
                       strokeWidth="3px"
                       // @ts-ignore
                       d={getPathDataFromEdgeSection(section)}
@@ -130,7 +136,7 @@ export const GraphView: React.FC<{ graphText: string } & UI.BoxProps> = ({
                       y={`${label.y}px`}
                     >
                       <UI.Stack
-                        bg="gray.800"
+                        bg="gray.700"
                         borderRadius="5px"
                         w={`${label.width}px`}
                         h={`${label.height}px`}
@@ -138,7 +144,7 @@ export const GraphView: React.FC<{ graphText: string } & UI.BoxProps> = ({
                         justifyContent="center"
                         textAlign="center"
                       >
-                        <UI.Box color="white" fontSize="sm" fontWeight="bold">
+                        <UI.Box color="white" fontSize="xs" fontWeight="bold">
                           {label.text}
                         </UI.Box>
                       </UI.Stack>
@@ -149,7 +155,7 @@ export const GraphView: React.FC<{ graphText: string } & UI.BoxProps> = ({
             </React.Fragment>
           );
         })}
-      </UI.Box>
+      </g>
     </UI.Box>
   );
 };

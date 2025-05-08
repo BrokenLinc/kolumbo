@@ -66,7 +66,13 @@ export const GraphChat: React.FC = () => {
 
   return (
     <UI.HStack w="100vw" h="100vh" alignItems="stretch">
-      <UI.Stack w={64} overflowY="scroll" gap={0}>
+      <UI.Stack
+        w={64}
+        overflowY="scroll"
+        gap={0}
+        borderRight="1px solid"
+        borderColor="gray.800"
+      >
         <UI.HStack justifyContent="space-between" p={4}>
           <UI.Box>Projects</UI.Box>
           <UI.Box color="gray.500">{projects.list.length}</UI.Box>
@@ -107,10 +113,12 @@ export const GraphChat: React.FC = () => {
           </>
         ) : null}
       </UI.Stack>
-      <UI.Stack alignItems="stretch" flex={1}>
+      <UI.Stack alignItems="stretch" flex={1} gap={0}>
         {graphText ? (
-          <UI.Box position="relative">
-            <GraphView graphText={graphText} flex={1} color="black" />
+          <UI.Flex position="relative" flex={1} h={0} alignItems="stretch">
+            <UI.Flex flex={1} alignItems="stretch" p={4}>
+              <GraphView graphText={graphText} />
+            </UI.Flex>
             <UI.Button
               position="absolute"
               top={4}
@@ -119,7 +127,7 @@ export const GraphChat: React.FC = () => {
             >
               Save new project
             </UI.Button>
-          </UI.Box>
+          </UI.Flex>
         ) : null}
         <ChatInput
           value={chatInputValue}
