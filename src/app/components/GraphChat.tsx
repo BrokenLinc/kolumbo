@@ -2,7 +2,13 @@
 
 import { ChatInput, GraphView } from "@@components";
 import * as UI from "@@ui";
-import { callAI, test_animals, test_family, test_snacks } from "@@utils";
+import {
+  createAuthoringResponse,
+  createHighlightingResponse,
+  test_animals,
+  test_family,
+  test_snacks,
+} from "@@utils";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -50,12 +56,29 @@ const useProjects = () => {
 export const GraphChat: React.FC = () => {
   const projects = useProjects();
   const [graphText, setGraphText] = React.useState(initialGraphText);
+  const [highlightIds, setHighlightIds] = React.useState<string[]>();
+  const [isAuthoring, setIsAuthoring] = React.useState(false);
   const [chatInputValue, setChatInputValue] = React.useState("");
 
+  console.log(graphText);
+
   const handleSendButtonClick = async () => {
-    const response = await callAI(chatInputValue);
-    console.log(response);
-    setGraphText(response);
+    if (isAuthoring) {
+      const response = await createAuthoringResponse(chatInputValue);
+      // console.log(response);
+      setGraphText(response);
+    } else {
+      const response = await createHighlightingResponse(
+        [chatInputValue, graphText].join(" ")
+      );
+      // console.log(response);
+      try {
+        const ids = JSON.parse(response) as string[];
+        setHighlightIds(ids);
+      } catch (e) {
+        console.error(e);
+      }
+    }
   };
 
   const handleSaveButtonClick = () => {
@@ -87,7 +110,10 @@ export const GraphChat: React.FC = () => {
               textAlign="left"
               justifyContent="start"
               size="sm"
-              onClick={() => setGraphText(project.graphText)}
+              onClick={() => {
+                setGraphText(project.graphText);
+                setHighlightIds([]);
+              }}
             >
               {new Date(project.createdAt).toLocaleString()}
             </UI.Button>
@@ -105,7 +131,10 @@ export const GraphChat: React.FC = () => {
                 textAlign="left"
                 justifyContent="start"
                 size="sm"
-                onClick={() => setGraphText(JSON.stringify(example.graph))}
+                onClick={() => {
+                  setGraphText(JSON.stringify(example.graph));
+                  setHighlightIds([]);
+                }}
               >
                 {example.id}
               </UI.Button>
@@ -117,7 +146,7 @@ export const GraphChat: React.FC = () => {
         {graphText ? (
           <UI.Flex position="relative" flex={1} h={0} alignItems="stretch">
             <UI.Flex flex={1} alignItems="stretch" p={4}>
-              <GraphView graphText={graphText} />
+              <GraphView graphText={graphText} highlightIds={highlightIds} />
             </UI.Flex>
             <UI.Button
               position="absolute"
@@ -133,6 +162,20 @@ export const GraphChat: React.FC = () => {
           value={chatInputValue}
           onValueChange={setChatInputValue}
           onSendButtonClick={handleSendButtonClick}
+          controls={
+            <UI.Switch.Root
+              colorPalette="green"
+              checked={isAuthoring}
+              onCheckedChange={(e) => setIsAuthoring(e.checked)}
+            >
+              <UI.Switch.HiddenInput />
+              <UI.Switch.Label>Highlight</UI.Switch.Label>
+              <UI.Switch.Control>
+                <UI.Switch.Thumb />
+              </UI.Switch.Control>
+              <UI.Switch.Label>Create</UI.Switch.Label>
+            </UI.Switch.Root>
+          }
         />
       </UI.Stack>
     </UI.HStack>

@@ -7,6 +7,7 @@ export {
   HStack,
   Menu,
   Stack,
+  Switch,
   Text,
   Textarea,
   VStack,

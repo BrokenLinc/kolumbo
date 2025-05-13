@@ -35,7 +35,7 @@ const convertRawGraphToElk = (graph: RawGraph) => {
         return {
           ...edge,
           labels: edge.label
-            ? [{ text: edge.label, width: 60, height: 20 }]
+            ? [{ text: edge.label, width: 80, height: 20 }]
             : undefined,
           id: edge.id,
           sources: [edge.source],
@@ -46,10 +46,9 @@ const convertRawGraphToElk = (graph: RawGraph) => {
     .catch(console.error);
 };
 
-export const GraphView: React.FC<{ graphText: string } & UI.BoxProps> = ({
-  graphText,
-  ...props
-}) => {
+export const GraphView: React.FC<
+  { graphText: string; highlightIds?: string[] } & UI.BoxProps
+> = ({ graphText, highlightIds, ...props }) => {
   const [graph, setGraph] = React.useState<ElkNode>();
   const draggableRootRef = React.useRef<SVGGElement>(null);
 
@@ -91,7 +90,7 @@ export const GraphView: React.FC<{ graphText: string } & UI.BoxProps> = ({
             y={`${node.y}px`}
           >
             <UI.Stack
-              bg="purple.500"
+              bg={highlightIds?.includes(node.id) ? "green.600" : "gray.700"}
               borderRadius="5px"
               w={`${node.width}px`}
               h={`${node.height}px`}
@@ -115,7 +114,11 @@ export const GraphView: React.FC<{ graphText: string } & UI.BoxProps> = ({
                       key={i}
                       as="path"
                       fill="none"
-                      stroke="gray.700"
+                      stroke={
+                        highlightIds?.includes(edge.id)
+                          ? "green.700"
+                          : "gray.800"
+                      }
                       strokeWidth="3px"
                       // @ts-ignore
                       d={getPathDataFromEdgeSection(section)}
@@ -136,7 +139,11 @@ export const GraphView: React.FC<{ graphText: string } & UI.BoxProps> = ({
                       y={`${label.y}px`}
                     >
                       <UI.Stack
-                        bg="gray.700"
+                        bg={
+                          highlightIds?.includes(edge.id)
+                            ? "green.700"
+                            : "gray.800"
+                        }
                         borderRadius="5px"
                         w={`${label.width}px`}
                         h={`${label.height}px`}

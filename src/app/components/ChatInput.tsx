@@ -7,7 +7,8 @@ export const ChatInput: React.FC<{
   value: string;
   onValueChange: (v: string) => any;
   onSendButtonClick: () => any;
-}> = ({ value, onValueChange, onSendButtonClick: onSendClick }) => (
+  controls?: React.ReactNode;
+}> = ({ value, onValueChange, onSendButtonClick: onSendClick, controls }) => (
   <UI.Flex p={4} position="relative" alignItems="stretch">
     <UI.Textarea
       value={value}
@@ -16,8 +17,9 @@ export const ChatInput: React.FC<{
       h={40}
       bg="gray.900"
     />
-    <UI.Button position="absolute" bottom={6} right={6} onClick={onSendClick}>
-      Send
-    </UI.Button>
+    <UI.HStack position="absolute" bottom={6} right={6} gap={8}>
+      {controls}
+      <UI.Button onClick={onSendClick}>Send</UI.Button>
+    </UI.HStack>
   </UI.Flex>
 );
