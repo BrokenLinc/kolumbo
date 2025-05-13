@@ -23,19 +23,27 @@ const convertRawGraphToElk = (graph: RawGraph) => {
         "elk.layered.spacing.nodeNodeBetweenLayers": "80",
         "elk.spacing.nodeNode": "40",
       },
-      /* @ts-ignore */
       children: graph.nodes.map((node) => ({
         ...node,
         labels: node.label ? [{ text: node.label }] : undefined,
         width: 150,
         height: 40,
       })),
-      /* @ts-ignore */
       edges: graph.edges.map((edge) => {
         return {
           ...edge,
           labels: edge.label
-            ? [{ text: edge.label, width: 80, height: 20 }]
+            ? [
+                {
+                  text: edge.label,
+                  width: 80,
+                  height: 28,
+                  layoutOptions: {
+                    inline: "true",
+                    placement: "CENTER",
+                  },
+                },
+              ]
             : undefined,
           id: edge.id,
           sources: [edge.source],
@@ -69,6 +77,8 @@ export const GraphView: React.FC<
     return null;
   }
 
+  console.log(graph);
+
   return (
     <UI.Box
       as="svg"
@@ -80,14 +90,13 @@ export const GraphView: React.FC<
     >
       <g ref={draggableRootRef}>
         {graph.children?.map((node, i: number) => (
-          <UI.Box
+          <foreignObject
             key={i}
-            as="foreignObject"
-            w={`${node.width}px`}
-            h={`${node.height}px`}
+            width={node.width}
+            height={node.height}
             // @ts-ignore
-            x={`${node.x}px`}
-            y={`${node.y}px`}
+            x={node.x}
+            y={node.y}
           >
             <UI.Stack
               bg={highlightIds?.includes(node.id) ? "green.600" : "gray.700"}
@@ -102,7 +111,7 @@ export const GraphView: React.FC<
                 {node.labels?.map((label) => label.text).join(" ")}
               </UI.Box>
             </UI.Stack>
-          </UI.Box>
+          </foreignObject>
         ))}
         {graph.edges?.map((edge, i) => {
           return (
@@ -110,19 +119,50 @@ export const GraphView: React.FC<
               <React.Fragment>
                 {edge.sections?.map((section, i: number) => {
                   return (
-                    <UI.Box
-                      key={i}
-                      as="path"
-                      fill="none"
-                      stroke={
-                        highlightIds?.includes(edge.id)
-                          ? "green.700"
-                          : "gray.800"
-                      }
-                      strokeWidth="3px"
-                      // @ts-ignore
-                      d={getPathDataFromEdgeSection(section)}
-                    />
+                    <React.Fragment key={i}>
+                      <UI.Box
+                        key={i}
+                        as="circle"
+                        fill={
+                          highlightIds?.includes(edge.id)
+                            ? "green.600"
+                            : "gray.700"
+                        }
+                        // @ts-ignore
+                        cx={`${section.startPoint.x}px`}
+                        cy={`${section.startPoint.y}px`}
+                        r="4px"
+                        strokeWidth="2px"
+                        stroke="black"
+                      />
+                      <UI.Box
+                        key={i}
+                        as="circle"
+                        fill={
+                          highlightIds?.includes(edge.id)
+                            ? "green.600"
+                            : "gray.700"
+                        }
+                        // @ts-ignore
+                        cx={`${section.endPoint.x}px`}
+                        cy={`${section.endPoint.y}px`}
+                        r="4px"
+                        strokeWidth="2px"
+                        stroke="black"
+                      />
+                      <UI.Box
+                        as="path"
+                        fill="none"
+                        stroke={
+                          highlightIds?.includes(edge.id)
+                            ? "green.600"
+                            : "gray.700"
+                        }
+                        strokeWidth="2px"
+                        // @ts-ignore
+                        d={getPathDataFromEdgeSection(section)}
+                      />
+                    </React.Fragment>
                   );
                 })}
               </React.Fragment>
@@ -139,10 +179,16 @@ export const GraphView: React.FC<
                       y={`${label.y}px`}
                     >
                       <UI.Stack
+                        border="2px solid"
+                        borderColor={
+                          highlightIds?.includes(edge.id)
+                            ? "green.600"
+                            : "gray.700"
+                        }
                         bg={
                           highlightIds?.includes(edge.id)
-                            ? "green.700"
-                            : "gray.800"
+                            ? "green.900"
+                            : "black"
                         }
                         borderRadius="5px"
                         w={`${label.width}px`}
