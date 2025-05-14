@@ -121,7 +121,6 @@ export const GraphView: React.FC<
                   return (
                     <React.Fragment key={i}>
                       <UI.Box
-                        key={i}
                         as="circle"
                         fill={
                           highlightIds?.includes(edge.id)
@@ -136,7 +135,6 @@ export const GraphView: React.FC<
                         stroke="black"
                       />
                       <UI.Box
-                        key={i}
                         as="circle"
                         fill={
                           highlightIds?.includes(edge.id)
