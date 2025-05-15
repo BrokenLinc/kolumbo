@@ -2,7 +2,12 @@
 
 import * as UI from "@@ui";
 import { convertTextToGraph } from "@@utils";
-import ELK, { ElkEdgeSection, ElkNode } from "elkjs/lib/elk.bundled.js";
+import ELK, {
+  ElkEdgeSection,
+  ElkExtendedEdge,
+  ElkNode,
+} from "elkjs/lib/elk.bundled.js";
+import _ from "lodash";
 import panzoom from "panzoom";
 import React from "react";
 import { RawGraph } from "../utils/types";
@@ -13,6 +18,8 @@ const elk = new ELK();
 // - https://www.eclipse.org/elk/reference/algorithms.html
 // - https://www.eclipse.org/elk/reference/options.html
 
+const colorScheme = "blue";
+
 const convertRawGraphToElk = (graph: RawGraph) => {
   return elk
     .layout({
@@ -20,7 +27,7 @@ const convertRawGraphToElk = (graph: RawGraph) => {
       layoutOptions: {
         "elk.direction": "DOWN",
         "elk.algorithm": "layered", // recommend "layered' or "mrtree"
-        "elk.layered.spacing.nodeNodeBetweenLayers": "80",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "40",
         "elk.spacing.nodeNode": "40",
       },
       children: graph.nodes.map((node) => ({
@@ -94,135 +101,213 @@ export const GraphView: React.FC<
     >
       <g ref={draggableRootRef}>
         {graph.children?.map((node, i: number) => (
-          <foreignObject
+          <GraphNodeView
             key={i}
-            width={(node.width || 0) + 40}
-            height={(node.height || 0) + 40}
-            // @ts-ignore
-            x={(node.x || 0) - 20}
-            y={(node.y || 0) - 20}
-          >
-            <UI.Box p="20px">
-              <UI.Stack
-                bg={highlightIds?.includes(node.id) ? "green.600" : "gray.700"}
-                borderRadius="5px"
-                w={`${node.width}px`}
-                h={`${node.height}px`}
-                alignItems="center"
-                justifyContent="center"
-                textAlign="center"
-                onClick={() => onElementPress?.(node.id)}
-                cursor="pointer"
-                // boxShadow={
-                //   highlightIds?.includes(node.id)
-                //     ? "0 0 20px var(--chakra-colors-green-600)"
-                //     : undefined
-                // }
-              >
-                <UI.Box color="white" fontSize="sm" fontWeight="bold">
-                  {node.labels?.map((label) => label.text).join(" ")}
-                </UI.Box>
-              </UI.Stack>
-            </UI.Box>
-          </foreignObject>
+            node={node}
+            highlighted={highlightIds?.includes(node.id)}
+            onLabelPress={() => onElementPress?.(node.id)}
+          />
         ))}
         {graph.edges?.map((edge, i) => {
           return (
-            <React.Fragment key={i}>
-              <React.Fragment>
-                {edge.sections?.map((section, i: number) => {
-                  return (
-                    <React.Fragment key={i}>
-                      <UI.Box
-                        as="circle"
-                        fill={
-                          highlightIds?.includes(edge.id)
-                            ? "green.600"
-                            : "gray.700"
-                        }
-                        // @ts-ignore
-                        cx={`${section.startPoint.x}px`}
-                        cy={`${section.startPoint.y}px`}
-                        r="4px"
-                        strokeWidth="2px"
-                        stroke="black"
-                      />
-                      <UI.Box
-                        as="circle"
-                        fill={
-                          highlightIds?.includes(edge.id)
-                            ? "green.600"
-                            : "gray.700"
-                        }
-                        // @ts-ignore
-                        cx={`${section.endPoint.x}px`}
-                        cy={`${section.endPoint.y}px`}
-                        r="4px"
-                        strokeWidth="2px"
-                        stroke="black"
-                      />
-                      <UI.Box
-                        as="path"
-                        fill="none"
-                        stroke={
-                          highlightIds?.includes(edge.id)
-                            ? "green.600"
-                            : "gray.700"
-                        }
-                        strokeWidth="2px"
-                        // @ts-ignore
-                        d={getPathDataFromEdgeSection(section)}
-                      />
-                    </React.Fragment>
-                  );
-                })}
-              </React.Fragment>
-              <React.Fragment>
-                {edge.labels?.map((label, i) => {
-                  return (
-                    <UI.Box
-                      key={i}
-                      as="foreignObject"
-                      w={`${label.width}px`}
-                      h={`${label.height}px`}
-                      // @ts-ignore
-                      x={`${label.x}px`}
-                      y={`${label.y}px`}
-                    >
-                      <UI.Stack
-                        border="2px solid"
-                        borderColor={
-                          highlightIds?.includes(edge.id)
-                            ? "green.600"
-                            : "gray.700"
-                        }
-                        bg={
-                          highlightIds?.includes(edge.id)
-                            ? "green.900"
-                            : "black"
-                        }
-                        borderRadius="5px"
-                        w={`${label.width}px`}
-                        h={`${label.height}px`}
-                        alignItems="center"
-                        justifyContent="center"
-                        textAlign="center"
-                        onClick={() => onElementPress?.(edge.id)}
-                        cursor="pointer"
-                      >
-                        <UI.Box color="white" fontSize="xs" fontWeight="bold">
-                          {label.text}
-                        </UI.Box>
-                      </UI.Stack>
-                    </UI.Box>
-                  );
-                })}
-              </React.Fragment>
-            </React.Fragment>
+            <GraphEdgeView
+              key={i}
+              edge={edge}
+              highlighted={highlightIds?.includes(edge.id)}
+              onLabelPress={() => onElementPress?.(edge.id)}
+              sourceNodeHighlighted={highlightIds?.includes(edge.sources[0])}
+              targetNodeHighlighted={highlightIds?.includes(edge.targets[0])}
+            />
           );
         })}
       </g>
     </UI.Box>
+  );
+};
+
+const GraphNodeView: React.FC<{
+  node: ElkNode;
+  highlighted?: boolean;
+  onLabelPress?: (node: ElkNode) => any;
+}> = ({ node, highlighted, onLabelPress }) => {
+  const margin = 20;
+
+  return (
+    <foreignObject
+      width={(node.width || 0) + margin * 2}
+      height={(node.height || 0) + margin * 2}
+      // @ts-ignore
+      x={(node.x || 0) - margin}
+      y={(node.y || 0) - margin}
+    >
+      <UI.Box p={px(margin)}>
+        <UI.Stack
+          bg={highlighted ? `${colorScheme}.600` : "gray.700"}
+          borderRadius="5px"
+          w={px(node.width)}
+          h={px(node.height)}
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+          onClick={() => onLabelPress?.(node)}
+          cursor="pointer"
+          boxShadow={
+            highlighted
+              ? `0 0 20px var(--chakra-colors-${colorScheme}-600)`
+              : undefined
+          }
+        >
+          <UI.Box color="white" fontSize="sm" fontWeight="bold">
+            {node.labels?.map((label) => label.text).join(" ")}
+          </UI.Box>
+        </UI.Stack>
+      </UI.Box>
+    </foreignObject>
+  );
+};
+
+const GraphEdgeView: React.FC<{
+  edge: ElkExtendedEdge;
+  highlighted?: boolean;
+  onLabelPress?: (edge: ElkExtendedEdge) => any;
+  sourceNodeHighlighted?: boolean;
+  targetNodeHighlighted?: boolean;
+}> = ({
+  edge,
+  highlighted,
+  onLabelPress,
+  sourceNodeHighlighted,
+  targetNodeHighlighted,
+}) => {
+  return (
+    <React.Fragment>
+      {edge.sections?.map((section, i: number) => {
+        return (
+          <GraphEdgeSectionView
+            key={i}
+            section={section}
+            highlighted={highlighted}
+            sourceNodeHighlighted={sourceNodeHighlighted}
+            targetNodeHighlighted={targetNodeHighlighted}
+          />
+        );
+      })}
+      <GraphEdgeLabelView
+        edge={edge}
+        highlighted={highlighted}
+        onPress={onLabelPress}
+      />
+    </React.Fragment>
+  );
+};
+
+const GraphEdgeSectionView: React.FC<{
+  section: ElkEdgeSection;
+  highlighted?: boolean;
+  sourceNodeHighlighted?: boolean;
+  targetNodeHighlighted?: boolean;
+}> = ({
+  section,
+  highlighted,
+  sourceNodeHighlighted,
+  targetNodeHighlighted,
+}) => {
+  return (
+    <React.Fragment>
+      <UI.Box
+        as="circle"
+        fill={highlighted ? `${colorScheme}.600` : "gray.700"}
+        // @ts-ignore
+        cx={px(section.startPoint.x)}
+        cy={px(section.startPoint.y)}
+        r="4px"
+        strokeWidth="2px"
+        stroke={sourceNodeHighlighted ? `${colorScheme}.900` : "black"}
+      />
+      {/* <UI.Box
+        as="circle"
+        fill={
+          highlighted
+            ? `${colorScheme}.600`
+            : "gray.700"
+        }
+        // @ts-ignore
+        cx={px(section.endPoint.x)`}
+        cy={px(section.endPoint.y)`}
+        r="4px"
+        strokeWidth="2px"
+        stroke={targetNodeHighlighted ? `${colorScheme}.900` : "black"}
+      /> */}
+      <UI.Box
+        as="polygon"
+        fill={highlighted ? `${colorScheme}.600` : "gray.700"}
+        strokeWidth="2px"
+        stroke={targetNodeHighlighted ? `${colorScheme}.900` : "black"}
+        strokeLinejoin="round"
+        transform={`translate(${px(section.endPoint.x)},${px(section.endPoint.y)})`}
+        // @ts-ignore
+        points="-8,-6 8,-6 0,4"
+      />
+      <UI.Box
+        as="path"
+        fill="none"
+        stroke={highlighted ? `${colorScheme}.600` : "gray.700"}
+        strokeWidth="2px"
+        // @ts-ignore
+        d={getPathDataFromEdgeSection(section)}
+      />
+    </React.Fragment>
+  );
+};
+
+const GraphEdgeLabelView: React.FC<{
+  edge: ElkExtendedEdge;
+  highlighted?: boolean;
+  onPress?: (edge: ElkExtendedEdge) => any;
+}> = ({ edge, highlighted, onPress }) => {
+  const margin = 20;
+
+  return (
+    <React.Fragment>
+      {edge.labels?.map((label, i) => {
+        return (
+          <UI.Box
+            key={i}
+            as="foreignObject"
+            w={px((label.width || 0) + margin * 2)}
+            h={px((label.height || 0) + margin * 2)}
+            // @ts-ignore
+            x={px((label.x || 0) - margin)}
+            y={px((label.y || 0) - margin)}
+          >
+            <UI.Box p={px(margin)}>
+              <UI.Stack
+                border="2px solid"
+                borderColor={highlighted ? `${colorScheme}.600` : "gray.700"}
+                bg={highlighted ? `${colorScheme}.900` : "black"}
+                borderRadius="5px"
+                w={px(label.width)}
+                h={px(label.height)}
+                alignItems="center"
+                justifyContent="center"
+                textAlign="center"
+                onClick={() => onPress?.(edge)}
+                cursor="pointer"
+                boxShadow={
+                  highlighted
+                    ? `0 0 20px var(--chakra-colors-${colorScheme}-600)`
+                    : undefined
+                }
+              >
+                <UI.Box color="white" fontSize="xs" fontWeight="bold">
+                  {label.text}
+                </UI.Box>
+              </UI.Stack>
+            </UI.Box>
+          </UI.Box>
+        );
+      })}
+    </React.Fragment>
   );
 };
 
@@ -266,6 +351,11 @@ const getPathDataFromEdgeSection = (
   });
 
   return d;
+};
+
+const px = (input?: number | number[]) => {
+  const value = _.sum(_.flatten([input]));
+  return `${value || 0}px`;
 };
 
 // const getPolylinePointsFromEdgeSection = (section: ElkEdgeSection) => {
