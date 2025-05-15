@@ -55,8 +55,12 @@ const convertRawGraphToElk = (graph: RawGraph) => {
 };
 
 export const GraphView: React.FC<
-  { graphText: string; highlightIds?: string[] } & UI.BoxProps
-> = ({ graphText, highlightIds, ...props }) => {
+  {
+    graphText: string;
+    highlightIds?: string[];
+    onElementPress?: (id: string) => void;
+  } & UI.BoxProps
+> = ({ graphText, highlightIds, onElementPress, ...props }) => {
   const [graph, setGraph] = React.useState<ElkNode>();
   const draggableRootRef = React.useRef<SVGGElement>(null);
 
@@ -77,7 +81,7 @@ export const GraphView: React.FC<
     return null;
   }
 
-  console.log(graph);
+  console.log(graphText);
 
   return (
     <UI.Box
@@ -92,25 +96,34 @@ export const GraphView: React.FC<
         {graph.children?.map((node, i: number) => (
           <foreignObject
             key={i}
-            width={node.width}
-            height={node.height}
+            width={(node.width || 0) + 40}
+            height={(node.height || 0) + 40}
             // @ts-ignore
-            x={node.x}
-            y={node.y}
+            x={(node.x || 0) - 20}
+            y={(node.y || 0) - 20}
           >
-            <UI.Stack
-              bg={highlightIds?.includes(node.id) ? "green.600" : "gray.700"}
-              borderRadius="5px"
-              w={`${node.width}px`}
-              h={`${node.height}px`}
-              alignItems="center"
-              justifyContent="center"
-              textAlign="center"
-            >
-              <UI.Box color="white" fontSize="sm" fontWeight="bold">
-                {node.labels?.map((label) => label.text).join(" ")}
-              </UI.Box>
-            </UI.Stack>
+            <UI.Box p="20px">
+              <UI.Stack
+                bg={highlightIds?.includes(node.id) ? "green.600" : "gray.700"}
+                borderRadius="5px"
+                w={`${node.width}px`}
+                h={`${node.height}px`}
+                alignItems="center"
+                justifyContent="center"
+                textAlign="center"
+                onClick={() => onElementPress?.(node.id)}
+                cursor="pointer"
+                // boxShadow={
+                //   highlightIds?.includes(node.id)
+                //     ? "0 0 20px var(--chakra-colors-green-600)"
+                //     : undefined
+                // }
+              >
+                <UI.Box color="white" fontSize="sm" fontWeight="bold">
+                  {node.labels?.map((label) => label.text).join(" ")}
+                </UI.Box>
+              </UI.Stack>
+            </UI.Box>
           </foreignObject>
         ))}
         {graph.edges?.map((edge, i) => {
@@ -194,6 +207,8 @@ export const GraphView: React.FC<
                         alignItems="center"
                         justifyContent="center"
                         textAlign="center"
+                        onClick={() => onElementPress?.(edge.id)}
+                        cursor="pointer"
                       >
                         <UI.Box color="white" fontSize="xs" fontWeight="bold">
                           {label.text}

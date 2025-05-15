@@ -56,9 +56,19 @@ const useProjects = () => {
 export const GraphChat: React.FC = () => {
   const projects = useProjects();
   const [graphText, setGraphText] = React.useState(initialGraphText);
-  const [highlightIds, setHighlightIds] = React.useState<string[]>();
+  const [highlightIds, setHighlightIds] = React.useState<string[]>([]);
   const [isAuthoring, setIsAuthoring] = React.useState(false);
   const [chatInputValue, setChatInputValue] = React.useState("");
+
+  const handleElementPress = (id: string) => {
+    setHighlightIds((prev) => {
+      if (prev?.includes(id)) {
+        return prev.filter((existingId) => existingId !== id);
+      } else {
+        return [...(prev || []), id];
+      }
+    });
+  };
 
   console.log(graphText);
 
@@ -146,7 +156,12 @@ export const GraphChat: React.FC = () => {
         {graphText ? (
           <UI.Flex position="relative" flex={1} h={0} alignItems="stretch">
             <UI.Flex flex={1} alignItems="stretch" p={4}>
-              <GraphView graphText={graphText} highlightIds={highlightIds} />
+              <GraphView
+                key={graphText}
+                graphText={graphText}
+                highlightIds={highlightIds}
+                onElementPress={handleElementPress}
+              />
             </UI.Flex>
             <UI.Button
               position="absolute"
