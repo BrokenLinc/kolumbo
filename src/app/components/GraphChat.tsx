@@ -28,9 +28,13 @@ type Project = {
   createdAt: number;
 };
 
+/**
+ * A hook for reading and writing Projects to local storage.
+ */
 const useProjects = () => {
   const [projects, saveProjects] = useLocalStorage<Project[]>("projects", []);
 
+  // Create a new Project and add it to the list.
   const add = (projectInput: Pick<Project, "graphText">) => {
     const newList = [
       ...projects,
@@ -53,18 +57,29 @@ const useProjects = () => {
   return { list: projects, add, remove };
 };
 
+/**
+ * The main component for working with Graph Projects.
+ */
 export const GraphChat: React.FC = () => {
   const projects = useProjects();
-  const [graphText, setGraphText] = React.useState(initialGraphText);
+  // The current active graph text (a raw string containing JSON).
+  const [graphText, setGraphText] = React.useState("");
+  // The IDs of the currently selected Nodes and Edges to highlight.
   const [highlightIds, setHighlightIds] = React.useState<string[]>([]);
+  // The current active mode can be "authoring" or "creating".
   const [isAuthoring, setIsAuthoring] = React.useState(false);
+  // The string value bound to the primary textarea input.
   const [chatInputValue, setChatInputValue] = React.useState("");
 
+  // Callback when Nodes or Edges are pressed.
   const handleElementPress = (id: string) => {
     setHighlightIds((prev) => {
+      // Toggle the ID's presence in the list.
       if (prev?.includes(id)) {
+        // Remove the ID.
         return prev.filter((existingId) => existingId !== id);
       } else {
+        // Add the ID.
         return [...(prev || []), id];
       }
     });
@@ -72,12 +87,15 @@ export const GraphChat: React.FC = () => {
 
   console.log(graphText);
 
+  // Callback for the chat-style form's submit button being pressed.
   const handleSendButtonClick = async () => {
     if (isAuthoring) {
+      // Send the user's text input, and receive response text from the "authoring" AI service.
       const response = await createAuthoringResponse(chatInputValue);
       // console.log(response);
       setGraphText(response);
     } else {
+      // Send the user's text input, and receive response text from the "highlighting" AI service.
       const response = await createHighlightingResponse(
         [chatInputValue, graphText].join(" ")
       );
@@ -91,6 +109,7 @@ export const GraphChat: React.FC = () => {
     }
   };
 
+  // Callback for the "Save" button being clicked on the current active project canvas.
   const handleSaveButtonClick = () => {
     projects.add({
       graphText,
@@ -98,15 +117,21 @@ export const GraphChat: React.FC = () => {
   };
 
   return (
-    <UI.HStack w="100vw" h="100vh" alignItems="stretch">
+    <UI.HStack
+      key="viewport-container"
+      w="100vw"
+      h="100vh"
+      alignItems="stretch"
+    >
       <UI.Stack
+        key="left-pane"
         w={64}
         overflowY="scroll"
         gap={0}
         borderRight="1px solid"
         borderColor="gray.800"
       >
-        <UI.HStack justifyContent="space-between" p={4}>
+        <UI.HStack key="projects-heading" justifyContent="space-between" p={4}>
           <UI.Box>Projects</UI.Box>
           <UI.Box color="gray.500">{projects.list.length}</UI.Box>
         </UI.HStack>
@@ -130,7 +155,11 @@ export const GraphChat: React.FC = () => {
           ))}
         {TESTING ? (
           <>
-            <UI.HStack justifyContent="space-between" p={4}>
+            <UI.HStack
+              key="examples-heading"
+              justifyContent="space-between"
+              p={4}
+            >
               <UI.Box>Examples</UI.Box>
               <UI.Box color="gray.500">{examples.length}</UI.Box>
             </UI.HStack>
@@ -152,7 +181,7 @@ export const GraphChat: React.FC = () => {
           </>
         ) : null}
       </UI.Stack>
-      <UI.Stack alignItems="stretch" flex={1} gap={0}>
+      <UI.Stack key="graph-canvas-area" alignItems="stretch" flex={1} gap={0}>
         {graphText ? (
           <UI.Flex position="relative" flex={1} h={0} alignItems="stretch">
             <UI.Flex flex={1} alignItems="stretch" p={4}>

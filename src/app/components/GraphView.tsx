@@ -18,8 +18,12 @@ const elk = new ELK();
 // - https://www.eclipse.org/elk/reference/algorithms.html
 // - https://www.eclipse.org/elk/reference/options.html
 
+// ChakraUI based color scheme for use when highlighting Nodes and Edges.
 const colorScheme = "blue";
 
+/**
+ * A function that takes in the minimal RawGraph data structure and produces a complete ElkNode graph.
+ */
 const convertRawGraphToElk = (graph: RawGraph) => {
   return elk
     .layout({
@@ -33,6 +37,7 @@ const convertRawGraphToElk = (graph: RawGraph) => {
       children: graph.nodes.map((node) => ({
         ...node,
         labels: node.label ? [{ text: node.label }] : undefined,
+        // Set a standard size for Nodes
         width: 150,
         height: 40,
       })),
@@ -43,8 +48,10 @@ const convertRawGraphToElk = (graph: RawGraph) => {
             ? [
                 {
                   text: edge.label,
+                  // Set a standard size for Edge labels.
                   width: 80,
                   height: 28,
+                  // Position the label centered, overlaid on the line.
                   layoutOptions: {
                     inline: "true",
                     placement: "CENTER",
@@ -61,6 +68,9 @@ const convertRawGraphToElk = (graph: RawGraph) => {
     .catch(console.error);
 };
 
+/**
+ * A component for rendering a graph as an SVG element, and capture interaction events on the elements.
+ */
 export const GraphView: React.FC<
   {
     graphText: string;
@@ -68,9 +78,12 @@ export const GraphView: React.FC<
     onElementPress?: (id: string) => void;
   } & UI.BoxProps
 > = ({ graphText, highlightIds, onElementPress, ...props }) => {
+  // The ELK based graph that will be used to render the SVG.
   const [graph, setGraph] = React.useState<ElkNode>();
+  // An element ref for binding the main SVG group element to panning and zooming.
   const draggableRootRef = React.useRef<SVGGElement>(null);
 
+  // When the string based graphText changes (or on mount), convert it to an ELK graph and store in state.
   React.useLayoutEffect(() => {
     const rawGraph = convertTextToGraph(graphText);
     convertRawGraphToElk(rawGraph).then((v: any) => {
@@ -78,6 +91,7 @@ export const GraphView: React.FC<
     });
   }, [graphText]);
 
+  // Bind the panzoom behavior to the main SVG group element ref.
   React.useEffect(() => {
     if (graph && draggableRootRef.current) {
       panzoom(draggableRootRef.current);
@@ -92,6 +106,7 @@ export const GraphView: React.FC<
 
   return (
     <UI.Box
+      key="svg-element-root"
       as="svg"
       w="full"
       // @ts-ignore
@@ -99,7 +114,7 @@ export const GraphView: React.FC<
       viewBox={`0 0 ${graph.width} ${graph.height}`}
       {...props}
     >
-      <g ref={draggableRootRef}>
+      <g key="panzoom-svg-group" ref={draggableRootRef}>
         {graph.children?.map((node, i: number) => (
           <GraphNodeView
             key={i}
@@ -125,11 +140,15 @@ export const GraphView: React.FC<
   );
 };
 
+/**
+ * A component for rendering a Node as an HTML element embedded in the SVG, and capturing interaction events.
+ */
 const GraphNodeView: React.FC<{
   node: ElkNode;
   highlighted?: boolean;
   onLabelPress?: (node: ElkNode) => any;
 }> = ({ node, highlighted, onLabelPress }) => {
+  // Extra space around the element must exist or the shadow will be clipped.
   const margin = 20;
 
   return (
@@ -140,8 +159,9 @@ const GraphNodeView: React.FC<{
       x={(node.x || 0) - margin}
       y={(node.y || 0) - margin}
     >
-      <UI.Box p={px(margin)}>
+      <UI.Box key="padded-node-container" p={px(margin)}>
         <UI.Stack
+          key="node-card-surface"
           bg={highlighted ? `${colorScheme}.600` : "gray.700"}
           borderRadius="5px"
           w={px(node.width)}
@@ -157,7 +177,12 @@ const GraphNodeView: React.FC<{
               : undefined
           }
         >
-          <UI.Box color="white" fontSize="sm" fontWeight="bold">
+          <UI.Box
+            key="node-label-text"
+            color="white"
+            fontSize="sm"
+            fontWeight="bold"
+          >
             {node.labels?.map((label) => label.text).join(" ")}
           </UI.Box>
         </UI.Stack>
@@ -166,6 +191,9 @@ const GraphNodeView: React.FC<{
   );
 };
 
+/**
+ * A component for rendering an Edge in SVG, and capturing interaction events.
+ */
 const GraphEdgeView: React.FC<{
   edge: ElkExtendedEdge;
   highlighted?: boolean;
@@ -201,6 +229,9 @@ const GraphEdgeView: React.FC<{
   );
 };
 
+/**
+ * A component for rendering an Edge Section as SVG shapes.
+ */
 const GraphEdgeSectionView: React.FC<{
   section: ElkEdgeSection;
   highlighted?: boolean;
@@ -215,6 +246,7 @@ const GraphEdgeSectionView: React.FC<{
   return (
     <React.Fragment>
       <UI.Box
+        key="source-start-point"
         as="circle"
         fill={highlighted ? `${colorScheme}.600` : "gray.700"}
         // @ts-ignore
@@ -225,6 +257,7 @@ const GraphEdgeSectionView: React.FC<{
         stroke={sourceNodeHighlighted ? `${colorScheme}.900` : "black"}
       />
       {/* <UI.Box
+        key="target-end-point"
         as="circle"
         fill={
           highlighted
@@ -239,6 +272,7 @@ const GraphEdgeSectionView: React.FC<{
         stroke={targetNodeHighlighted ? `${colorScheme}.900` : "black"}
       /> */}
       <UI.Box
+        key="target-end-arrow"
         as="polygon"
         fill={highlighted ? `${colorScheme}.600` : "gray.700"}
         strokeWidth="2px"
@@ -249,6 +283,7 @@ const GraphEdgeSectionView: React.FC<{
         points="-8,-6 8,-6 0,4"
       />
       <UI.Box
+        key="connecting-line"
         as="path"
         fill="none"
         stroke={highlighted ? `${colorScheme}.600` : "gray.700"}
@@ -259,29 +294,32 @@ const GraphEdgeSectionView: React.FC<{
     </React.Fragment>
   );
 };
-
+/**
+ * A component for rendering an Edge Label as an HTML element embedded in SVG, and capturing interaction events.
+ */
 const GraphEdgeLabelView: React.FC<{
   edge: ElkExtendedEdge;
   highlighted?: boolean;
   onPress?: (edge: ElkExtendedEdge) => any;
 }> = ({ edge, highlighted, onPress }) => {
-  const margin = 20;
+  // Extra space around the element must exist or the shadow will be clipped.
+  const margin = 10;
 
   return (
     <React.Fragment>
       {edge.labels?.map((label, i) => {
         return (
-          <UI.Box
+          <foreignObject
             key={i}
-            as="foreignObject"
-            w={px((label.width || 0) + margin * 2)}
-            h={px((label.height || 0) + margin * 2)}
+            width={(label.width || 0) + margin * 2}
+            height={(label.height || 0) + margin * 2}
             // @ts-ignore
-            x={px((label.x || 0) - margin)}
-            y={px((label.y || 0) - margin)}
+            x={(label.x || 0) - margin}
+            y={(label.y || 0) - margin}
           >
-            <UI.Box p={px(margin)}>
+            <UI.Box key="padded-container" p={px(margin)}>
               <UI.Stack
+                key="edge-label-card-surface"
                 border="2px solid"
                 borderColor={highlighted ? `${colorScheme}.600` : "gray.700"}
                 bg={highlighted ? `${colorScheme}.900` : "black"}
@@ -295,22 +333,31 @@ const GraphEdgeLabelView: React.FC<{
                 cursor="pointer"
                 boxShadow={
                   highlighted
-                    ? `0 0 20px var(--chakra-colors-${colorScheme}-600)`
+                    ? `0 0 10px var(--chakra-colors-${colorScheme}-600)`
                     : undefined
                 }
               >
-                <UI.Box color="white" fontSize="xs" fontWeight="bold">
+                <UI.Box
+                  key="edge-label-text"
+                  color="white"
+                  fontSize="xs"
+                  fontWeight="bold"
+                >
                   {label.text}
                 </UI.Box>
               </UI.Stack>
             </UI.Box>
-          </UI.Box>
+          </foreignObject>
         );
       })}
     </React.Fragment>
   );
 };
 
+/**
+ * A function that generates SVG path data from an ELK Edge Section.
+ * Corner radius causes arced curves to be applied at the bend points.
+ */
 const getPathDataFromEdgeSection = (
   section: ElkEdgeSection,
   cornerRadius = 10
@@ -324,24 +371,33 @@ const getPathDataFromEdgeSection = (
 
   points.forEach((point, i) => {
     if (i === 0) {
+      // First point
       d += [point.x, point.y].join(" ");
       d += ", ";
     } else if (i === points.length - 1) {
+      // End point
       d += "L ";
       d += [point.x, point.y].join(" ");
       d += ", ";
     } else {
+      // Extrapolate the earlier position along the segment between this point and the previous point.
       const backPoint = {
         x: point.x - Math.sign(point.x - points[i - 1].x) * cornerRadius,
         y: point.y - Math.sign(point.y - points[i - 1].y) * cornerRadius,
       };
+
+      // Extrapolate the forward position along the segment between this point and the next point.
       const forwardPoint = {
         x: point.x + Math.sign(points[i + 1].x - point.x) * cornerRadius,
         y: point.y + Math.sign(points[i + 1].y - point.y) * cornerRadius,
       };
+
+      // Draw a line to the earlier point.
       d += "L ";
       d += [backPoint.x, backPoint.y].join(" ");
       d += ", ";
+
+      // Quadratic Bézier curveto through the bend point to the forward point.
       d += "Q ";
       d += [point.x, point.y].join(" ");
       d += ", ";
@@ -353,6 +409,9 @@ const getPathDataFromEdgeSection = (
   return d;
 };
 
+/**
+ * Input one or more numeric values, and return the sum with "px" suffix.
+ */
 const px = (input?: number | number[]) => {
   const value = _.sum(_.flatten([input]));
   return `${value || 0}px`;
