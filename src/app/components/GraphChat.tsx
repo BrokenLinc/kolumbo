@@ -182,8 +182,8 @@ export const GraphChat: React.FC = () => {
         ) : null}
       </UI.Stack>
       <UI.Stack key="graph-canvas-area" alignItems="stretch" flex={1} gap={0}>
-        {graphText ? (
-          <UI.Flex position="relative" flex={1} h={0} alignItems="stretch">
+        <UI.Flex flex={1} position="relative" h={0} alignItems="stretch">
+          {graphText ? (
             <UI.Flex flex={1} alignItems="stretch" p={4}>
               <GraphView
                 key={graphText}
@@ -191,17 +191,17 @@ export const GraphChat: React.FC = () => {
                 highlightIds={highlightIds}
                 onElementPress={handleElementPress}
               />
+              <UI.Button
+                position="absolute"
+                top={4}
+                right={4}
+                onClick={handleSaveButtonClick}
+              >
+                Save new project
+              </UI.Button>
             </UI.Flex>
-            <UI.Button
-              position="absolute"
-              top={4}
-              right={4}
-              onClick={handleSaveButtonClick}
-            >
-              Save new project
-            </UI.Button>
-          </UI.Flex>
-        ) : null}
+          ) : null}
+        </UI.Flex>
         <ChatInput
           value={chatInputValue}
           onValueChange={setChatInputValue}
