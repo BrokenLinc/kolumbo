@@ -10,9 +10,21 @@ export const test_animals: RawGraph = {
     { id: "4", label: "Animal" },
   ],
   edges: [
-    { id: "e13", source: "1", target: "3", label: "is a" },
-    { id: "e23", source: "2", target: "3", label: "is a" },
-    { id: "e34", source: "3", target: "4", label: "is a" },
+    {
+      id: "e13",
+      source: "1",
+      target: "3",
+      label: "is a",
+      arrow: "source-to-target",
+    },
+    {
+      id: "e23",
+      source: "2",
+      target: "3",
+      label: "is a",
+      arrow: "target-to-source",
+    },
+    { id: "e34", source: "3", target: "4", label: "is a", arrow: "two-way" },
   ],
 };
 

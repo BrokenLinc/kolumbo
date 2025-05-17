@@ -214,6 +214,7 @@ const GraphEdgeView: React.FC<{
           <GraphEdgeSectionView
             key={i}
             section={section}
+            edge={edge}
             highlighted={highlighted}
             sourceNodeHighlighted={sourceNodeHighlighted}
             targetNodeHighlighted={targetNodeHighlighted}
@@ -234,54 +235,76 @@ const GraphEdgeView: React.FC<{
  */
 const GraphEdgeSectionView: React.FC<{
   section: ElkEdgeSection;
+  edge: ElkExtendedEdge;
   highlighted?: boolean;
   sourceNodeHighlighted?: boolean;
   targetNodeHighlighted?: boolean;
 }> = ({
   section,
+  edge,
   highlighted,
   sourceNodeHighlighted,
   targetNodeHighlighted,
 }) => {
+  const arrow = (edge as any).arrow || "none";
+
   return (
     <React.Fragment>
-      <UI.Box
-        key="source-start-point"
-        as="circle"
-        fill={highlighted ? `${colorScheme}.600` : "gray.700"}
-        // @ts-ignore
-        cx={px(section.startPoint.x)}
-        cy={px(section.startPoint.y)}
-        r="4px"
-        strokeWidth="2px"
-        stroke={sourceNodeHighlighted ? `${colorScheme}.900` : "black"}
-      />
-      {/* <UI.Box
-        key="target-end-point"
-        as="circle"
-        fill={
-          highlighted
-            ? `${colorScheme}.600`
-            : "gray.700"
-        }
-        // @ts-ignore
-        cx={px(section.endPoint.x)`}
-        cy={px(section.endPoint.y)`}
-        r="4px"
-        strokeWidth="2px"
-        stroke={targetNodeHighlighted ? `${colorScheme}.900` : "black"}
-      /> */}
-      <UI.Box
-        key="target-end-arrow"
-        as="polygon"
-        fill={highlighted ? `${colorScheme}.600` : "gray.700"}
-        strokeWidth="2px"
-        stroke={targetNodeHighlighted ? `${colorScheme}.900` : "black"}
-        strokeLinejoin="round"
-        transform={`translate(${px(section.endPoint.x)},${px(section.endPoint.y)})`}
-        // @ts-ignore
-        points="-8,-6 8,-6 0,4"
-      />
+      {/* Source point shape */}
+      {arrow === "none" || arrow === "source-to-target" ? (
+        <UI.Box
+          key="source-point"
+          as="circle"
+          fill={highlighted ? `${colorScheme}.600` : "gray.700"}
+          strokeWidth="2px"
+          stroke={sourceNodeHighlighted ? `${colorScheme}.900` : "black"}
+          // @ts-ignore
+          cx={px(section.startPoint.x)}
+          cy={px(section.startPoint.y)}
+          r="4px"
+        />
+      ) : (
+        <UI.Box
+          key="source-arrow"
+          as="polygon"
+          fill={highlighted ? `${colorScheme}.600` : "gray.700"}
+          strokeWidth="2px"
+          stroke={sourceNodeHighlighted ? `${colorScheme}.900` : "black"}
+          strokeLinejoin="round"
+          transform={`translate(${px(section.startPoint.x)},${px(section.startPoint.y)}) rotate(180deg)`}
+          // @ts-ignore
+          points="-8,-6 8,-6 0,4"
+        />
+      )}
+
+      {/* Target point shape */}
+      {arrow === "none" || arrow === "target-to-source" ? (
+        <UI.Box
+          key="target-point"
+          as="circle"
+          fill={highlighted ? `${colorScheme}.600` : "gray.700"}
+          strokeWidth="2px"
+          stroke={targetNodeHighlighted ? `${colorScheme}.900` : "black"}
+          // @ts-ignore
+          cx={px(section.endPoint.x)}
+          cy={px(section.endPoint.y)}
+          r="4px"
+        />
+      ) : (
+        <UI.Box
+          key="target-arrow"
+          as="polygon"
+          fill={highlighted ? `${colorScheme}.600` : "gray.700"}
+          strokeWidth="2px"
+          stroke={targetNodeHighlighted ? `${colorScheme}.900` : "black"}
+          strokeLinejoin="round"
+          transform={`translate(${px(section.endPoint.x)},${px(section.endPoint.y)})`}
+          // @ts-ignore
+          points="-8,-6 8,-6 0,4"
+        />
+      )}
+
+      {/* Connecting line */}
       <UI.Box
         key="connecting-line"
         as="path"
@@ -294,6 +317,7 @@ const GraphEdgeSectionView: React.FC<{
     </React.Fragment>
   );
 };
+
 /**
  * A component for rendering an Edge Label as an HTML element embedded in SVG, and capturing interaction events.
  */
