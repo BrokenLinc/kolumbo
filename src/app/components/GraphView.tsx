@@ -10,7 +10,7 @@ import ELK, {
 import _ from "lodash";
 import panzoom from "panzoom";
 import React from "react";
-import { RawGraph } from "../utils/types";
+import { RawGraph, RawGraphNode } from "../utils/types";
 
 const elk = new ELK();
 
@@ -31,16 +31,10 @@ const convertRawGraphToElk = (graph: RawGraph) => {
       layoutOptions: {
         "elk.direction": "DOWN",
         "elk.algorithm": "layered", // recommend "layered' or "mrtree"
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN", // support edges crosses container boundaries
         "elk.layered.spacing.nodeNodeBetweenLayers": "40",
-        "elk.spacing.nodeNode": "40",
       },
-      children: graph.nodes.map((node) => ({
-        ...node,
-        labels: node.label ? [{ text: node.label }] : undefined,
-        // Set a standard size for Nodes
-        width: 150,
-        height: 40,
-      })),
+      children: convertRawGraphNodeByIdToElkNodeChildren(graph.nodes),
       edges: graph.edges.map((edge) => {
         return {
           ...edge,
@@ -66,6 +60,29 @@ const convertRawGraphToElk = (graph: RawGraph) => {
       }),
     })
     .catch(console.error);
+};
+
+/**
+ * A function that takes in a list of RawGraphNodes and recursively produces a tree of ElkNodes.
+ */
+const convertRawGraphNodeByIdToElkNodeChildren = (
+  nodes: RawGraphNode[],
+  parentNodeId?: string
+): ElkNode[] => {
+  return nodes
+    .filter((node) => node.parentId === parentNodeId)
+    .map((node) => ({
+      ...node,
+      children: convertRawGraphNodeByIdToElkNodeChildren(nodes, node.id),
+      labels: node.label ? [{ text: node.label }] : undefined,
+      // Set a standard size for Nodes
+      width: 150,
+      height: 40,
+      layoutOptions: {
+        // padding for parent containers
+        "elk.padding": "[top=36,left=12,bottom=12,right=12]",
+      },
+    }));
 };
 
 /**
@@ -103,6 +120,7 @@ export const GraphView: React.FC<
   }
 
   console.log(graphText);
+  console.log(graph);
 
   return (
     <UI.Box
@@ -115,15 +133,49 @@ export const GraphView: React.FC<
       {...props}
     >
       <g key="panzoom-svg-group" ref={draggableRootRef}>
-        {graph.children?.map((node, i: number) => (
-          <GraphNodeView
-            key={i}
-            node={node}
-            highlighted={highlightIds?.includes(node.id)}
-            onLabelPress={() => onElementPress?.(node.id)}
-          />
-        ))}
-        {graph.edges?.map((edge, i) => {
+        <GraphNodeContainerView
+          rootNode={graph}
+          node={graph}
+          isRoot
+          highlightIds={highlightIds}
+          onElementPress={onElementPress}
+        />
+      </g>
+    </UI.Box>
+  );
+};
+
+/**
+ * A component for rendering a a Node and its children recursively.
+ */
+const GraphNodeContainerView: React.FC<{
+  rootNode: ElkNode;
+  node: ElkNode;
+  isRoot?: boolean;
+  highlightIds?: string[];
+  onElementPress?: (id: string) => void;
+}> = ({ rootNode, node, isRoot, highlightIds, onElementPress }) => {
+  return (
+    <g transform={`translate(${node.x || 0},${node.y || 0})`}>
+      {!isRoot && (
+        <GraphNodeView
+          node={node}
+          highlighted={highlightIds?.includes(node.id)}
+          onLabelPress={() => onElementPress?.(node.id)}
+        />
+      )}
+      {node.children?.map((node, i: number) => (
+        <GraphNodeContainerView
+          key={i}
+          rootNode={rootNode}
+          node={node}
+          highlightIds={highlightIds}
+          onElementPress={onElementPress}
+        />
+      ))}
+      {rootNode.edges
+        ?.filter((edge) => edge.container === node.id)
+        ?.map((edge, i) => {
           return (
             <GraphEdgeView
               key={i}
@@ -135,11 +187,9 @@ export const GraphView: React.FC<
             />
           );
         })}
-      </g>
-    </UI.Box>
+    </g>
   );
 };
-
 /**
  * A component for rendering a Node as an HTML element embedded in the SVG, and capturing interaction events.
  */
@@ -150,44 +200,60 @@ const GraphNodeView: React.FC<{
 }> = ({ node, highlighted, onLabelPress }) => {
   // Extra space around the element must exist or the shadow will be clipped.
   const margin = 20;
+  const isContainer = !!node.children?.length;
 
   return (
-    <foreignObject
-      width={(node.width || 0) + margin * 2}
-      height={(node.height || 0) + margin * 2}
-      // @ts-ignore
-      x={(node.x || 0) - margin}
-      y={(node.y || 0) - margin}
-    >
-      <UI.Box key="padded-node-container" p={px(margin)}>
-        <UI.Stack
-          key="node-card-surface"
-          bg={highlighted ? `${colorScheme}.600` : "gray.700"}
-          borderRadius="5px"
-          w={px(node.width)}
-          h={px(node.height)}
-          alignItems="center"
-          justifyContent="center"
-          textAlign="center"
-          onClick={() => onLabelPress?.(node)}
-          cursor="pointer"
-          boxShadow={
-            highlighted
-              ? `0 0 20px var(--chakra-colors-${colorScheme}-600)`
-              : undefined
-          }
-        >
-          <UI.Box
-            key="node-label-text"
-            color="white"
-            fontSize="sm"
-            fontWeight="bold"
+    <g transform={`translate(${-margin},${-margin})`}>
+      <foreignObject
+        width={(node.width || 0) + margin * 2}
+        height={(node.height || 0) + margin * 2}
+      >
+        <UI.Box key="padded-node-container" p={px(margin)}>
+          <UI.Stack
+            key="node-card-surface"
+            bg={
+              isContainer
+                ? "transparent"
+                : highlighted
+                  ? `${colorScheme}.600`
+                  : "gray.700"
+            }
+            border={isContainer ? "1px dashed" : "none"}
+            borderColor={
+              isContainer
+                ? highlighted
+                  ? `${colorScheme}.600`
+                  : "gray.700"
+                : ""
+            }
+            borderRadius="5px"
+            w={px(node.width)}
+            h={px(node.height)}
+            alignItems="center"
+            justifyContent={isContainer ? "start" : "center"}
+            textAlign="center"
+            onClick={() => onLabelPress?.(node)}
+            cursor="pointer"
+            boxShadow={
+              highlighted
+                ? `0 0 20px var(--chakra-colors-${colorScheme}-600)`
+                : undefined
+            }
+            p={2}
           >
-            {node.labels?.map((label) => label.text).join(" ")}
-          </UI.Box>
-        </UI.Stack>
-      </UI.Box>
-    </foreignObject>
+            <UI.Box
+              key="node-label-text"
+              color="white"
+              fontSize={isContainer ? "9px" : "sm"}
+              fontWeight="bold"
+              // textTransform={isContainer ? "uppercase" : "none"}
+            >
+              {node.labels?.map((label) => label.text).join(" ")}
+            </UI.Box>
+          </UI.Stack>
+        </UI.Box>
+      </foreignObject>
+    </g>
   );
 };
 

@@ -1,6 +1,7 @@
 export type RawGraphNode = {
   id: string;
   label: string;
+  parentId?: string;
 };
 
 export type RawGraphEdge = {

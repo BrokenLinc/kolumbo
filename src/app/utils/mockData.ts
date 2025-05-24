@@ -4,8 +4,9 @@ const position = { x: 0, y: 0 };
 
 export const test_animals: RawGraph = {
   nodes: [
-    { id: "1", label: "Zebra" },
-    { id: "2", label: "Horse" },
+    { id: "5", label: "Equines" },
+    { id: "1", label: "Zebra", parentId: "5" },
+    { id: "2", label: "Horse", parentId: "5" },
     { id: "3", label: "Mammal" },
     { id: "4", label: "Animal" },
   ],
@@ -25,6 +26,7 @@ export const test_animals: RawGraph = {
       arrow: "target-to-source",
     },
     { id: "e34", source: "3", target: "4", label: "is a", arrow: "two-way" },
+    { id: "e12", source: "1", target: "2", label: "is not a" },
   ],
 };
 
