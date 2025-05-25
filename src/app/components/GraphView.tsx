@@ -19,7 +19,7 @@ const elk = new ELK();
 // - https://www.eclipse.org/elk/reference/options.html
 
 // ChakraUI based color scheme for use when highlighting Nodes and Edges.
-const colorScheme = "blue";
+const colorScheme = "green";
 
 /**
  * A function that takes in the minimal RawGraph data structure and produces a complete ElkNode graph.
@@ -56,6 +56,9 @@ const convertRawGraphToElk = (graph: RawGraph) => {
           id: edge.id,
           sources: [edge.source],
           targets: [edge.target],
+          layoutOptions: {
+            thickness: "60",
+          },
         };
       }),
     })
@@ -198,60 +201,58 @@ const GraphNodeView: React.FC<{
   highlighted?: boolean;
   onLabelPress?: (node: ElkNode) => any;
 }> = ({ node, highlighted, onLabelPress }) => {
-  // Extra space around the element must exist or the shadow will be clipped.
-  const margin = 20;
   const isContainer = !!node.children?.length;
 
   return (
-    <g transform={`translate(${-margin},${-margin})`}>
-      <foreignObject
-        width={(node.width || 0) + margin * 2}
-        height={(node.height || 0) + margin * 2}
-      >
-        <UI.Box key="padded-node-container" p={px(margin)}>
-          <UI.Stack
-            key="node-card-surface"
-            bg={
-              isContainer
-                ? "transparent"
-                : highlighted
-                  ? `${colorScheme}.600`
-                  : "gray.700"
-            }
-            border={isContainer ? "1px dashed" : "none"}
-            borderColor={
-              isContainer
-                ? highlighted
-                  ? `${colorScheme}.600`
-                  : "gray.700"
-                : ""
-            }
-            borderRadius="5px"
-            w={px(node.width)}
-            h={px(node.height)}
-            alignItems="center"
-            justifyContent={isContainer ? "start" : "center"}
-            textAlign="center"
-            onClick={() => onLabelPress?.(node)}
-            cursor="pointer"
-            boxShadow={
-              highlighted
-                ? `0 0 20px var(--chakra-colors-${colorScheme}-600)`
-                : undefined
-            }
-            p={2}
+    <g>
+      <UI.Box
+        as="rect"
+        w={px(node.width)}
+        h={px(node.height)}
+        fill={
+          isContainer
+            ? highlighted
+              ? `${colorScheme}.950`
+              : ""
+            : highlighted
+              ? `${colorScheme}.600`
+              : "gray.700"
+        }
+        stroke={
+          isContainer ? (highlighted ? `${colorScheme}.600` : "gray.700") : ""
+        }
+        strokeWidth={2}
+        strokeDasharray={isContainer ? "5 5" : ""}
+        filter={
+          highlighted
+            ? `drop-shadow(0 0 8px var(--chakra-colors-${colorScheme}-600))`
+            : ""
+        }
+        // @ts-ignore
+        rx="5px"
+      />
+      <foreignObject width={node.width || 0} height={node.height || 0}>
+        <UI.Stack
+          key="node-card-surface"
+          w={px(node.width)}
+          h={px(node.height)}
+          alignItems="center"
+          justifyContent={isContainer ? "start" : "center"}
+          textAlign="center"
+          onClick={() => onLabelPress?.(node)}
+          cursor="pointer"
+          p={2}
+        >
+          <UI.Box
+            key="node-label-text"
+            color="white"
+            fontSize={isContainer ? "9px" : "sm"}
+            fontWeight="bold"
+            // textTransform={isContainer ? "uppercase" : "none"}
           >
-            <UI.Box
-              key="node-label-text"
-              color="white"
-              fontSize={isContainer ? "9px" : "sm"}
-              fontWeight="bold"
-              // textTransform={isContainer ? "uppercase" : "none"}
-            >
-              {node.labels?.map((label) => label.text).join(" ")}
-            </UI.Box>
-          </UI.Stack>
-        </UI.Box>
+            {node.labels?.map((label) => label.text).join(" ")}
+          </UI.Box>
+        </UI.Stack>
       </foreignObject>
     </g>
   );
@@ -392,52 +393,50 @@ const GraphEdgeLabelView: React.FC<{
   highlighted?: boolean;
   onPress?: (edge: ElkExtendedEdge) => any;
 }> = ({ edge, highlighted, onPress }) => {
-  // Extra space around the element must exist or the shadow will be clipped.
-  const margin = 10;
-
   return (
     <React.Fragment>
       {edge.labels?.map((label, i) => {
         return (
-          <foreignObject
-            key={i}
-            width={(label.width || 0) + margin * 2}
-            height={(label.height || 0) + margin * 2}
-            // @ts-ignore
-            x={(label.x || 0) - margin}
-            y={(label.y || 0) - margin}
-          >
-            <UI.Box key="padded-container" p={px(margin)}>
-              <UI.Stack
-                key="edge-label-card-surface"
-                border="2px solid"
-                borderColor={highlighted ? `${colorScheme}.600` : "gray.700"}
-                bg={highlighted ? `${colorScheme}.900` : "black"}
-                borderRadius="5px"
-                w={px(label.width)}
-                h={px(label.height)}
-                alignItems="center"
-                justifyContent="center"
-                textAlign="center"
-                onClick={() => onPress?.(edge)}
-                cursor="pointer"
-                boxShadow={
-                  highlighted
-                    ? `0 0 10px var(--chakra-colors-${colorScheme}-600)`
-                    : undefined
-                }
-              >
-                <UI.Box
-                  key="edge-label-text"
-                  color="white"
-                  fontSize="xs"
-                  fontWeight="bold"
+          <g key={i} transform={`translate(${label.x || 0},${label.y || 0})`}>
+            <UI.Box
+              as="rect"
+              w={px(label.width)}
+              h={px(label.height)}
+              fill={highlighted ? `${colorScheme}.900` : "black"}
+              stroke={highlighted ? `${colorScheme}.600` : "gray.700"}
+              strokeWidth={2}
+              filter={
+                highlighted
+                  ? `drop-shadow(0 0 8px var(--chakra-colors-${colorScheme}-600))`
+                  : ""
+              }
+              // @ts-ignore
+              rx="5px"
+            />
+            <foreignObject width={label.width || 0} height={label.height || 0}>
+              <UI.Box key="padded-container">
+                <UI.Stack
+                  key="edge-label-card-surface"
+                  w={px(label.width)}
+                  h={px(label.height)}
+                  alignItems="center"
+                  justifyContent="center"
+                  textAlign="center"
+                  onClick={() => onPress?.(edge)}
+                  cursor="pointer"
                 >
-                  {label.text}
-                </UI.Box>
-              </UI.Stack>
-            </UI.Box>
-          </foreignObject>
+                  <UI.Box
+                    key="edge-label-text"
+                    color="white"
+                    fontSize="xs"
+                    fontWeight="bold"
+                  >
+                    {label.text}
+                  </UI.Box>
+                </UI.Stack>
+              </UI.Box>
+            </foreignObject>
+          </g>
         );
       })}
     </React.Fragment>
