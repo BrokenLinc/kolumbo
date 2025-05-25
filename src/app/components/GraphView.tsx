@@ -19,7 +19,7 @@ const elk = new ELK();
 // - https://www.eclipse.org/elk/reference/options.html
 
 // ChakraUI based color scheme for use when highlighting Nodes and Edges.
-const colorScheme = "green";
+const colorScheme = "blue";
 
 /**
  * A function that takes in the minimal RawGraph data structure and produces a complete ElkNode graph.
@@ -43,8 +43,8 @@ const convertRawGraphToElk = (graph: RawGraph) => {
                 {
                   text: edge.label,
                   // Set a standard size for Edge labels.
-                  width: 30 + edge.label.length * 7,
-                  height: 28,
+                  width: Math.max(snapUp(20 + edge.label.length * 7), 60),
+                  height: 30,
                   // Position the label centered, overlaid on the line.
                   layoutOptions: {
                     inline: "true",
@@ -79,7 +79,7 @@ const convertRawGraphNodeByIdToElkNodeChildren = (
       children: convertRawGraphNodeByIdToElkNodeChildren(nodes, node.id),
       labels: node.label ? [{ text: node.label }] : undefined,
       // Set a standard size for Nodes
-      width: 50 + node.label.length * 8,
+      width: Math.max(snapUp(40 + node.label.length * 8), 120),
       height: 40,
       layoutOptions: {
         // padding for parent containers
@@ -185,6 +185,7 @@ const GraphNodeContainerView: React.FC<{
               edge={edge}
               highlighted={highlightIds?.includes(edge.id)}
               onLabelPress={() => onElementPress?.(edge.id)}
+              onLinePress={() => onElementPress?.(edge.id)}
               sourceNodeHighlighted={highlightIds?.includes(edge.sources[0])}
               targetNodeHighlighted={highlightIds?.includes(edge.targets[0])}
             />
@@ -202,6 +203,8 @@ const GraphNodeView: React.FC<{
   onLabelPress?: (node: ElkNode) => any;
 }> = ({ node, highlighted, onLabelPress }) => {
   const isContainer = !!node.children?.length;
+  const neutralColor = "gray.500";
+  const highlightColor = `${colorScheme}.600`;
 
   return (
     <g>
@@ -215,11 +218,11 @@ const GraphNodeView: React.FC<{
               ? `${colorScheme}.950`
               : ""
             : highlighted
-              ? `${colorScheme}.600`
-              : "gray.700"
+              ? highlightColor
+              : neutralColor
         }
         stroke={
-          isContainer ? (highlighted ? `${colorScheme}.600` : "gray.700") : ""
+          isContainer ? (highlighted ? highlightColor : neutralColor) : ""
         }
         strokeWidth={2}
         strokeDasharray={isContainer ? "5 5" : ""}
@@ -265,12 +268,14 @@ const GraphEdgeView: React.FC<{
   edge: ElkExtendedEdge;
   highlighted?: boolean;
   onLabelPress?: (edge: ElkExtendedEdge) => any;
+  onLinePress?: (edge: ElkExtendedEdge) => any;
   sourceNodeHighlighted?: boolean;
   targetNodeHighlighted?: boolean;
 }> = ({
   edge,
   highlighted,
   onLabelPress,
+  onLinePress,
   sourceNodeHighlighted,
   targetNodeHighlighted,
 }) => {
@@ -285,6 +290,7 @@ const GraphEdgeView: React.FC<{
             highlighted={highlighted}
             sourceNodeHighlighted={sourceNodeHighlighted}
             targetNodeHighlighted={targetNodeHighlighted}
+            onPress={onLinePress}
           />
         );
       })}
@@ -304,27 +310,41 @@ const GraphEdgeSectionView: React.FC<{
   section: ElkEdgeSection;
   edge: ElkExtendedEdge;
   highlighted?: boolean;
+  onPress?: (edge: ElkExtendedEdge) => any;
   sourceNodeHighlighted?: boolean;
   targetNodeHighlighted?: boolean;
-}> = ({
-  section,
-  edge,
-  highlighted,
-  sourceNodeHighlighted,
-  targetNodeHighlighted,
-}) => {
+}> = ({ section, edge, highlighted, onPress }) => {
   const arrow = (edge as any).arrow || "none";
+  const neutralColor = "gray.500";
+  const highlightColor = `${colorScheme}.600`;
+  const strokeColor = highlighted ? highlightColor : neutralColor;
+
+  const { startNodeDirection, endNodeDirection } =
+    getSectionNodeDirections(section);
 
   return (
     <React.Fragment>
+      {/* Connecting line shadow */}
+      <UI.Box
+        key="connecting-line-shadow"
+        as="path"
+        fill="none"
+        stroke="black"
+        strokeWidth="6px"
+        // @ts-ignore
+        d={getPathDataFromEdgeSection(section)}
+      />
+
       {/* Source point shape */}
       {arrow === "none" || arrow === "source-to-target" ? (
         <UI.Box
           key="source-point"
           as="circle"
-          fill={highlighted ? `${colorScheme}.600` : "gray.700"}
+          cursor="pointer"
+          fill={strokeColor}
+          onClick={() => onPress?.(edge)}
           strokeWidth="2px"
-          stroke={sourceNodeHighlighted ? `${colorScheme}.900` : "black"}
+          stroke="black"
           // @ts-ignore
           cx={px(section.startPoint.x)}
           cy={px(section.startPoint.y)}
@@ -334,11 +354,13 @@ const GraphEdgeSectionView: React.FC<{
         <UI.Box
           key="source-arrow"
           as="polygon"
-          fill={highlighted ? `${colorScheme}.600` : "gray.700"}
+          cursor="pointer"
+          fill={strokeColor}
+          onClick={() => onPress?.(edge)}
           strokeWidth="2px"
-          stroke={sourceNodeHighlighted ? `${colorScheme}.900` : "black"}
+          stroke="black"
           strokeLinejoin="round"
-          transform={`translate(${px(section.startPoint.x)},${px(section.startPoint.y)}) rotate(180deg)`}
+          transform={`translate(${px(section.startPoint.x)},${px(section.startPoint.y)}) rotate(${(startNodeDirection * 180) / Math.PI - 90}deg)`}
           // @ts-ignore
           points="-8,-6 8,-6 0,4"
         />
@@ -349,9 +371,11 @@ const GraphEdgeSectionView: React.FC<{
         <UI.Box
           key="target-point"
           as="circle"
-          fill={highlighted ? `${colorScheme}.600` : "gray.700"}
+          cursor="pointer"
+          fill={strokeColor}
+          onClick={() => onPress?.(edge)}
           strokeWidth="2px"
-          stroke={targetNodeHighlighted ? `${colorScheme}.900` : "black"}
+          stroke="black"
           // @ts-ignore
           cx={px(section.endPoint.x)}
           cy={px(section.endPoint.y)}
@@ -361,11 +385,13 @@ const GraphEdgeSectionView: React.FC<{
         <UI.Box
           key="target-arrow"
           as="polygon"
-          fill={highlighted ? `${colorScheme}.600` : "gray.700"}
+          cursor="pointer"
+          fill={strokeColor}
+          onClick={() => onPress?.(edge)}
           strokeWidth="2px"
-          stroke={targetNodeHighlighted ? `${colorScheme}.900` : "black"}
+          stroke="black"
           strokeLinejoin="round"
-          transform={`translate(${px(section.endPoint.x)},${px(section.endPoint.y)})`}
+          transform={`translate(${px(section.endPoint.x)},${px(section.endPoint.y)}) rotate(${(endNodeDirection * 180) / Math.PI - 90}deg)`}
           // @ts-ignore
           points="-8,-6 8,-6 0,4"
         />
@@ -375,8 +401,10 @@ const GraphEdgeSectionView: React.FC<{
       <UI.Box
         key="connecting-line"
         as="path"
+        cursor="pointer"
         fill="none"
-        stroke={highlighted ? `${colorScheme}.600` : "gray.700"}
+        onClick={() => onPress?.(edge)}
+        stroke={strokeColor}
         strokeWidth="2px"
         // @ts-ignore
         d={getPathDataFromEdgeSection(section)}
@@ -403,7 +431,7 @@ const GraphEdgeLabelView: React.FC<{
               w={px(label.width)}
               h={px(label.height)}
               fill={highlighted ? `${colorScheme}.900` : "black"}
-              stroke={highlighted ? `${colorScheme}.600` : "gray.700"}
+              stroke={highlighted ? `${colorScheme}.600` : "gray.500"}
               strokeWidth={2}
               filter={
                 highlighted
@@ -504,6 +532,31 @@ const getPathDataFromEdgeSection = (
 const px = (input?: number | number[]) => {
   const value = _.sum(_.flatten([input]));
   return `${value || 0}px`;
+};
+
+/**
+ * Input a value and return a rounded-up value that grid snaps to the provided interval.
+ */
+const snapUp = (value: number, interval = 40) => {
+  return Math.ceil(value / interval) * interval;
+};
+
+const getSectionNodeDirections = (section: ElkEdgeSection) => {
+  const secondStartPoint = section.bendPoints?.[0] || section.endPoint;
+  const secondEndPoint =
+    section.bendPoints?.[section.bendPoints.length - 1] || section.startPoint;
+  const startNodeDirection = Math.atan2(
+    section.startPoint.y - secondStartPoint.y,
+    section.startPoint.x - secondStartPoint.x
+  );
+  const endNodeDirection = Math.atan2(
+    section.endPoint.y - secondEndPoint.y,
+    section.endPoint.x - secondEndPoint.x
+  );
+  return {
+    startNodeDirection,
+    endNodeDirection,
+  };
 };
 
 // const getPolylinePointsFromEdgeSection = (section: ElkEdgeSection) => {
