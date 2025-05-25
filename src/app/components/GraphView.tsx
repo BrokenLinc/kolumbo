@@ -43,7 +43,7 @@ const convertRawGraphToElk = (graph: RawGraph) => {
                 {
                   text: edge.label,
                   // Set a standard size for Edge labels.
-                  width: 80,
+                  width: 30 + edge.label.length * 7,
                   height: 28,
                   // Position the label centered, overlaid on the line.
                   layoutOptions: {
@@ -79,7 +79,7 @@ const convertRawGraphNodeByIdToElkNodeChildren = (
       children: convertRawGraphNodeByIdToElkNodeChildren(nodes, node.id),
       labels: node.label ? [{ text: node.label }] : undefined,
       // Set a standard size for Nodes
-      width: 150,
+      width: 50 + node.label.length * 8,
       height: 40,
       layoutOptions: {
         // padding for parent containers

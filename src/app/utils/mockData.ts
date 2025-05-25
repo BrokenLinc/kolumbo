@@ -27,6 +27,7 @@ export const test_animals: RawGraph = {
     },
     { id: "e34", source: "3", target: "4", label: "is a", arrow: "two-way" },
     { id: "e12", source: "1", target: "2", label: "is not a" },
+    { id: "e54", source: "5", target: "4", label: "is a" },
   ],
 };
 

@@ -8,21 +8,78 @@ const client = new OpenAI({
 const sample = {
   nodes: [
     {
+      id: "0",
+      label: "Clerk",
+    },
+    {
       id: "1",
-      label: "Mom",
+      label: "Customer",
     },
     {
       id: "2",
-      label: "Son",
+      label: "Food",
     },
     {
       id: "3",
-      label: "Daughter",
+      label: "Apple",
+      parentId: "2",
+    },
+    {
+      id: "4",
+      label: "Orange",
+      parentId: "2",
+    },
+    {
+      id: "5",
+      label: "Apple Tree",
+      parentId: "7",
+    },
+    {
+      id: "6",
+      label: "Orange Tree",
+      parentId: "7",
+    },
+    {
+      id: "7",
+      label: "Orchard",
     },
   ],
   edges: [
-    { id: "e12", source: "1", target: "2" },
-    { id: "e13", source: "1", target: "3" },
+    {
+      id: "e01",
+      source: "0",
+      target: "1",
+      label: "talks with",
+      arrow: "two-way",
+    },
+    {
+      id: "e12",
+      source: "1",
+      target: "2",
+      label: "purchases",
+      arrow: "source-to-target",
+    },
+    {
+      id: "e34",
+      source: "3",
+      target: "4",
+      label: "is not",
+      arrow: "none",
+    },
+    {
+      id: "e35",
+      source: "3",
+      target: "5",
+      label: "grows",
+      arrow: "target-to-source",
+    },
+    {
+      id: "e46",
+      source: "4",
+      target: "6",
+      label: "grows",
+      arrow: "target-to-source",
+    },
   ],
 };
 
