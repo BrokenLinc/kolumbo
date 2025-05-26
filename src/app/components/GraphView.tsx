@@ -122,8 +122,8 @@ export const GraphView: React.FC<
     return null;
   }
 
-  console.log(graphText);
-  console.log(graph);
+  // console.log(graphText);
+  // console.log(graph);
 
   return (
     <UI.Box

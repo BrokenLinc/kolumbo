@@ -5,7 +5,7 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const sample = {
+const sampleGraph = {
   nodes: [
     {
       id: "0",
@@ -83,20 +83,30 @@ const sample = {
   ],
 };
 
-export const createAuthoringResponse = async (message: string) => {
-  const response = await client.responses.create({
-    model: "gpt-4.1",
-    instructions: `You are an expert in modeling domain systems and diagramming them in collaboration with users. When the user tells you about some concepts and how they relate, your responses should be in the form of a json-based structure of nodes and relationships, like so: ${JSON.stringify(sample)}`,
-    input: message,
-  });
-
-  return response.output_text;
+const sample = {
+  graph: sampleGraph,
+  highlightIds: ["2", "3", "e35", "5", "7"],
 };
 
-export const createHighlightingResponse = async (message: string) => {
+export const createGraphingResponse = async (message: string) => {
   const response = await client.responses.create({
     model: "gpt-4.1",
-    instructions: `You are an expert in modeling domain systems and facilitating understanding with users. When the user messages you about some concepts and how they relate, they will include a reference artifact form of a json-based structure of nodes and relationships. Your response should be in the form of a json-based array of node ids and edge ids that are most relevant to the user's question, like so: ["1","e12","2"].`,
+    instructions: `
+      You are an expert in modeling domain systems, diagramming them in collaboration with users, and facilitating understanding with users.
+      You are familiar with a reading and writing standardized json-based structure of nodes and relationships called a "graph",
+      as well as an array of connected node ids, parent node ids, and edge ids that are most relevant to the user's question, called "highlightIds".
+      
+      Whenever the user sends you a message, it may contain a graph json artifact for reference.
+      Their message may represent an intent to create or modify a graph,
+      or an intent to simply better understand the existing graph.
+      
+      When you respond to the user, it should be purely in json, using the format below,
+      including a graph if the user intend to create or modify, or highlightIds if there is questioning intent.
+
+      In the following example, the user may have provided a graph describing a system of fruit trees, and then asked "Does food grow on apple trees?"
+
+      ${JSON.stringify(sample)}
+    `,
     input: message,
   });
 

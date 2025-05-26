@@ -3,8 +3,7 @@
 import { ChatInput, GraphView } from "@@components";
 import * as UI from "@@ui";
 import {
-  createAuthoringResponse,
-  createHighlightingResponse,
+  createGraphingResponse,
   test_animals,
   test_family,
   test_snacks,
@@ -12,9 +11,9 @@ import {
 import { useLocalStorage } from "@uidotdev/usehooks";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
+import { RawGraph } from "../utils/types";
 
 const TESTING = true;
-const initialGraphText = TESTING ? JSON.stringify(test_animals) : "";
 
 const examples = [
   { id: "Animals", graph: test_animals },
@@ -66,8 +65,6 @@ export const GraphChat: React.FC = () => {
   const [graphText, setGraphText] = React.useState("");
   // The IDs of the currently selected Nodes and Edges to highlight.
   const [highlightIds, setHighlightIds] = React.useState<string[]>([]);
-  // The current active mode can be "authoring" or "creating".
-  const [isAuthoring, setIsAuthoring] = React.useState(false);
   // The string value bound to the primary textarea input.
   const [chatInputValue, setChatInputValue] = React.useState("");
 
@@ -85,27 +82,28 @@ export const GraphChat: React.FC = () => {
     });
   };
 
-  console.log(graphText);
+  // console.log(graphText);
 
   // Callback for the chat-style form's submit button being pressed.
   const handleSendButtonClick = async () => {
-    if (isAuthoring) {
-      // Send the user's text input, and receive response text from the "authoring" AI service.
-      const response = await createAuthoringResponse(chatInputValue);
-      // console.log(response);
-      setGraphText(response);
-    } else {
-      // Send the user's text input, and receive response text from the "highlighting" AI service.
-      const response = await createHighlightingResponse(
-        [chatInputValue, graphText].join(" ")
-      );
-      // console.log(response);
-      try {
-        const ids = JSON.parse(response) as string[];
-        setHighlightIds(ids);
-      } catch (e) {
-        console.error(e);
-      }
+    // Send the user's text input, and receive response text from the "graphing" AI service.
+    const response = await createGraphingResponse(
+      [chatInputValue, graphText].join(" ")
+    );
+    console.log(response);
+    try {
+      const responseObject = JSON.parse(response) as {
+        graph: RawGraph;
+        highlightIds: string[];
+      };
+      // console.log(responseObject);
+      // TODO: type assertion
+      if (responseObject.graph)
+        setGraphText(JSON.stringify(responseObject.graph));
+      if (responseObject.highlightIds)
+        setHighlightIds(responseObject.highlightIds);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -205,20 +203,6 @@ export const GraphChat: React.FC = () => {
           value={chatInputValue}
           onValueChange={setChatInputValue}
           onSendButtonClick={handleSendButtonClick}
-          controls={
-            <UI.Switch.Root
-              colorPalette="green"
-              checked={isAuthoring}
-              onCheckedChange={(e) => setIsAuthoring(e.checked)}
-            >
-              <UI.Switch.HiddenInput />
-              <UI.Switch.Label>Highlight</UI.Switch.Label>
-              <UI.Switch.Control>
-                <UI.Switch.Thumb />
-              </UI.Switch.Control>
-              <UI.Switch.Label>Create</UI.Switch.Label>
-            </UI.Switch.Root>
-          }
         />
       </UI.Stack>
     </UI.HStack>
