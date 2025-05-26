@@ -135,9 +135,8 @@ export const GraphChat: React.FC = () => {
           <UI.Box>Projects</UI.Box>
           <UI.Box color="gray.500">{projects.list.length}</UI.Box>
         </UI.HStack>
-        {projects.list
-          .sort((p) => p.createdAt)
-          .reverse()
+        {[...projects.list]
+          .sort((p1, p2) => p2.createdAt - p1.createdAt)
           .map((project) => (
             <UI.Button
               key={project.id}
