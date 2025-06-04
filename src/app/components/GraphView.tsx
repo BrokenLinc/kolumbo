@@ -2,15 +2,17 @@
 
 import * as UI from "@@ui";
 import { convertTextToGraph } from "@@utils";
-import ELK, {
-  ElkEdgeSection,
-  ElkExtendedEdge,
-  ElkNode,
-} from "elkjs/lib/elk.bundled.js";
+import ELK from "elkjs/lib/elk.bundled.js";
 import _ from "lodash";
 import panzoom from "panzoom";
 import React from "react";
-import { RawGraph, RawGraphNode } from "../utils/types";
+import {
+  GraphEdgeSection,
+  GraphExtendedEdge,
+  GraphNode,
+  RawGraph,
+  RawGraphNode,
+} from "../utils/types";
 
 const elk = new ELK();
 
@@ -33,6 +35,7 @@ const convertRawGraphToElk = (graph: RawGraph) => {
         "elk.algorithm": "layered", // recommend "layered' or "mrtree"
         "elk.hierarchyHandling": "INCLUDE_CHILDREN", // support edges crosses container boundaries
         "elk.layered.spacing.nodeNodeBetweenLayers": "40",
+        "elk.nodeLabels.placement": "INSIDE V_TOP H_CENTER",
       },
       children: convertRawGraphNodeByIdToElkNodeChildren(graph.nodes),
       edges: graph.edges.map((edge) => {
@@ -71,19 +74,22 @@ const convertRawGraphToElk = (graph: RawGraph) => {
 const convertRawGraphNodeByIdToElkNodeChildren = (
   nodes: RawGraphNode[],
   parentNodeId?: string
-): ElkNode[] => {
+): GraphNode[] => {
   return nodes
     .filter((node) => node.parentId === parentNodeId)
     .map((node) => ({
       ...node,
       children: convertRawGraphNodeByIdToElkNodeChildren(nodes, node.id),
-      labels: node.label ? [{ text: node.label }] : undefined,
+      labels: node.label
+        ? [{ text: node.label, width: node.label.length * 8, height: 14 }]
+        : undefined,
       // Set a standard size for Nodes
       width: Math.max(snapUp(40 + node.label.length * 8), 120),
       height: 40,
       layoutOptions: {
         // padding for parent containers
-        "elk.padding": "[top=36,left=12,bottom=12,right=12]",
+        "elk.padding": "[top=12,left=12,bottom=12,right=12]",
+        "elk.nodeLabels.placement": "INSIDE V_TOP H_CENTER",
       },
     }));
 };
@@ -99,7 +105,7 @@ export const GraphView: React.FC<
   } & UI.BoxProps
 > = ({ graphText, highlightIds, onElementPress, ...props }) => {
   // The ELK based graph that will be used to render the SVG.
-  const [graph, setGraph] = React.useState<ElkNode>();
+  const [graph, setGraph] = React.useState<GraphNode>();
   // An element ref for binding the main SVG group element to panning and zooming.
   const draggableRootRef = React.useRef<SVGGElement>(null);
 
@@ -152,8 +158,8 @@ export const GraphView: React.FC<
  * A component for rendering a a Node and its children recursively.
  */
 const GraphNodeContainerView: React.FC<{
-  rootNode: ElkNode;
-  node: ElkNode;
+  rootNode: GraphNode;
+  node: GraphNode;
   isRoot?: boolean;
   highlightIds?: string[];
   onElementPress?: (id: string) => void;
@@ -198,12 +204,17 @@ const GraphNodeContainerView: React.FC<{
  * A component for rendering a Node as an HTML element embedded in the SVG, and capturing interaction events.
  */
 const GraphNodeView: React.FC<{
-  node: ElkNode;
+  node: GraphNode;
   highlighted?: boolean;
-  onLabelPress?: (node: ElkNode) => any;
+  onLabelPress?: (node: GraphNode) => any;
 }> = ({ node, highlighted, onLabelPress }) => {
   const isContainer = !!node.children?.length;
-  const neutralColor = "gray.500";
+  const neutralColor = {
+    default: "gray.500",
+    add: "green.500",
+    change: "yellow.500",
+    remove: "red.500",
+  }[node.data?.diffType || "default"];
   const highlightColor = `${colorScheme}.600`;
 
   return (
@@ -265,10 +276,10 @@ const GraphNodeView: React.FC<{
  * A component for rendering an Edge in SVG, and capturing interaction events.
  */
 const GraphEdgeView: React.FC<{
-  edge: ElkExtendedEdge;
+  edge: GraphExtendedEdge;
   highlighted?: boolean;
-  onLabelPress?: (edge: ElkExtendedEdge) => any;
-  onLinePress?: (edge: ElkExtendedEdge) => any;
+  onLabelPress?: (edge: GraphExtendedEdge) => any;
+  onLinePress?: (edge: GraphExtendedEdge) => any;
   sourceNodeHighlighted?: boolean;
   targetNodeHighlighted?: boolean;
 }> = ({
@@ -307,15 +318,20 @@ const GraphEdgeView: React.FC<{
  * A component for rendering an Edge Section as SVG shapes.
  */
 const GraphEdgeSectionView: React.FC<{
-  section: ElkEdgeSection;
-  edge: ElkExtendedEdge;
+  section: GraphEdgeSection;
+  edge: GraphExtendedEdge;
   highlighted?: boolean;
-  onPress?: (edge: ElkExtendedEdge) => any;
+  onPress?: (edge: GraphExtendedEdge) => any;
   sourceNodeHighlighted?: boolean;
   targetNodeHighlighted?: boolean;
 }> = ({ section, edge, highlighted, onPress }) => {
   const arrow = (edge as any).arrow || "none";
-  const neutralColor = "gray.500";
+  const neutralColor = {
+    default: "gray.500",
+    add: "green.500",
+    change: "yellow.500",
+    remove: "red.500",
+  }[edge.data?.diffType || "default"];
   const highlightColor = `${colorScheme}.600`;
   const strokeColor = highlighted ? highlightColor : neutralColor;
 
@@ -417,10 +433,17 @@ const GraphEdgeSectionView: React.FC<{
  * A component for rendering an Edge Label as an HTML element embedded in SVG, and capturing interaction events.
  */
 const GraphEdgeLabelView: React.FC<{
-  edge: ElkExtendedEdge;
+  edge: GraphExtendedEdge;
   highlighted?: boolean;
-  onPress?: (edge: ElkExtendedEdge) => any;
+  onPress?: (edge: GraphExtendedEdge) => any;
 }> = ({ edge, highlighted, onPress }) => {
+  const neutralColor = {
+    default: "gray.500",
+    add: "green.500",
+    change: "yellow.500",
+    remove: "red.500",
+  }[edge.data?.diffType || "default"];
+
   return (
     <React.Fragment>
       {edge.labels?.map((label, i) => {
@@ -431,7 +454,7 @@ const GraphEdgeLabelView: React.FC<{
               w={px(label.width)}
               h={px(label.height)}
               fill={highlighted ? `${colorScheme}.900` : "black"}
-              stroke={highlighted ? `${colorScheme}.600` : "gray.500"}
+              stroke={highlighted ? `${colorScheme}.600` : neutralColor}
               strokeWidth={2}
               filter={
                 highlighted
@@ -476,7 +499,7 @@ const GraphEdgeLabelView: React.FC<{
  * Corner radius causes arced curves to be applied at the bend points.
  */
 const getPathDataFromEdgeSection = (
-  section: ElkEdgeSection,
+  section: GraphEdgeSection,
   cornerRadius = 10
 ) => {
   const points = [
@@ -541,7 +564,7 @@ const snapUp = (value: number, interval = 40) => {
   return Math.ceil(value / interval) * interval;
 };
 
-const getSectionNodeDirections = (section: ElkEdgeSection) => {
+const getSectionNodeDirections = (section: GraphEdgeSection) => {
   const secondStartPoint = section.bendPoints?.[0] || section.endPoint;
   const secondEndPoint =
     section.bendPoints?.[section.bendPoints.length - 1] || section.startPoint;
@@ -559,7 +582,7 @@ const getSectionNodeDirections = (section: ElkEdgeSection) => {
   };
 };
 
-// const getPolylinePointsFromEdgeSection = (section: ElkEdgeSection) => {
+// const getPolylinePointsFromGraphEdgeSection = (section: GraphEdgeSection) => {
 //   const points = [
 //     section.startPoint,
 //     ...(section.bendPoints || []),

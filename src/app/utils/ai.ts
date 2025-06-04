@@ -8,75 +8,75 @@ const client = new OpenAI({
 const sampleGraph = {
   nodes: [
     {
-      id: "0",
+      id: "clerk",
       label: "Clerk",
     },
     {
-      id: "1",
+      id: "customer",
       label: "Customer",
     },
     {
-      id: "2",
+      id: "food",
       label: "Food",
     },
     {
-      id: "3",
+      id: "apple",
       label: "Apple",
-      parentId: "2",
+      parentId: "food",
     },
     {
-      id: "4",
+      id: "orange",
       label: "Orange",
-      parentId: "2",
+      parentId: "food",
     },
     {
-      id: "5",
+      id: "appleTree",
       label: "Apple Tree",
-      parentId: "7",
+      parentId: "orchard",
     },
     {
-      id: "6",
+      id: "orangeTree",
       label: "Orange Tree",
-      parentId: "7",
+      parentId: "orchard",
     },
     {
-      id: "7",
+      id: "orchard",
       label: "Orchard",
     },
   ],
   edges: [
     {
-      id: "e01",
-      source: "0",
-      target: "1",
+      id: "e-clerk-customer",
+      source: "clerk",
+      target: "customer",
       label: "talks with",
       arrow: "two-way",
     },
     {
-      id: "e12",
-      source: "1",
-      target: "2",
+      id: "e-customer-food",
+      source: "customer",
+      target: "food",
       label: "purchases",
       arrow: "source-to-target",
     },
     {
-      id: "e34",
-      source: "3",
-      target: "4",
+      id: "e-apple-orange",
+      source: "apple",
+      target: "orange",
       label: "is not",
       arrow: "none",
     },
     {
-      id: "e35",
-      source: "3",
-      target: "5",
+      id: "e-apple-appleTree",
+      source: "apple",
+      target: "appleTree",
       label: "grows",
       arrow: "target-to-source",
     },
     {
-      id: "e46",
-      source: "4",
-      target: "6",
+      id: "e-orange-orangeTree",
+      source: "orange",
+      target: "orangeTree",
       label: "grows",
       arrow: "target-to-source",
     },
@@ -85,7 +85,7 @@ const sampleGraph = {
 
 const sample = {
   graph: sampleGraph,
-  highlightIds: ["2", "3", "e35", "5", "7"],
+  highlightIds: ["food", "apple", "e-apple-appleTree", "appleTree", "orchard"],
 };
 
 export const createGraphingResponse = async (message: string) => {
@@ -102,6 +102,7 @@ export const createGraphingResponse = async (message: string) => {
       
       When you respond to the user, it should be purely in json, using the format below,
       including a graph if the user intend to create or modify, or highlightIds if there is questioning intent.
+      If you provided a modified graph from the user,  try to maintain the original entity ids for easy comparison.
 
       In the following example, the user may have provided a graph describing a system of fruit trees, and then asked "Does food grow on apple trees?"
 

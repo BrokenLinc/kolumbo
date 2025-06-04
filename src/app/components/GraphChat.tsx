@@ -11,6 +11,7 @@ import {
 import { useLocalStorage } from "@uidotdev/usehooks";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
+import { diffRawGraphs } from "../utils/diffRawGraphs";
 import { RawGraph } from "../utils/types";
 
 const TESTING = true;
@@ -62,11 +63,22 @@ const useProjects = () => {
 export const GraphChat: React.FC = () => {
   const projects = useProjects();
   // The current active graph text (a raw string containing JSON).
-  const [graphText, setGraphText] = React.useState("");
+  const [graphText, _setGraphText] = React.useState("");
   // The IDs of the currently selected Nodes and Edges to highlight.
   const [highlightIds, setHighlightIds] = React.useState<string[]>([]);
   // The string value bound to the primary textarea input.
   const [chatInputValue, setChatInputValue] = React.useState("");
+
+  // GROSS!
+  const setGraphText = (newGraphText: string) => {
+    _setGraphText((prevGraphText) => {
+      if (!prevGraphText) return newGraphText;
+
+      return JSON.stringify(
+        diffRawGraphs(JSON.parse(prevGraphText), JSON.parse(newGraphText))
+      );
+    });
+  };
 
   // Callback when Nodes or Edges are pressed.
   const handleElementPress = (id: string) => {
