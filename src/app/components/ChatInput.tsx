@@ -11,11 +11,19 @@ export const ChatInput: React.FC<{
   onValueChange: (v: string) => any;
   onSendButtonClick: () => any;
   controls?: React.ReactNode;
-}> = ({ value, onValueChange, onSendButtonClick: onSendClick, controls }) => (
+  disabled?: boolean;
+}> = ({
+  value,
+  onValueChange,
+  onSendButtonClick: onSendClick,
+  controls,
+  disabled,
+}) => (
   <UI.Flex key="control-group" p={4} position="relative" alignItems="stretch">
     <UI.Textarea
       value={value}
       onChange={(e) => onValueChange(e.target.value)}
+      disabled={disabled}
       resize="none"
       h={40}
       bg="gray.900"
@@ -28,7 +36,9 @@ export const ChatInput: React.FC<{
       gap={8}
     >
       {controls}
-      <UI.Button onClick={onSendClick}>Send</UI.Button>
+      <UI.Button disabled={disabled} onClick={onSendClick}>
+        Send
+      </UI.Button>
     </UI.HStack>
   </UI.Flex>
 );

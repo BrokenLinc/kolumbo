@@ -63,22 +63,30 @@ const useProjects = () => {
 export const GraphChat: React.FC = () => {
   const projects = useProjects();
   // The current active graph text (a raw string containing JSON).
-  const [graphText, _setGraphText] = React.useState("");
+  const [graphText, setGraphText] = React.useState("");
+  // The string value holding the proposed next graph iteration.
+  const [stagedGraphText, setStagedGraphText] = React.useState("");
   // The IDs of the currently selected Nodes and Edges to highlight.
   const [highlightIds, setHighlightIds] = React.useState<string[]>([]);
   // The string value bound to the primary textarea input.
   const [chatInputValue, setChatInputValue] = React.useState("");
 
-  // GROSS!
-  const setGraphText = (newGraphText: string) => {
-    _setGraphText((prevGraphText) => {
-      if (!prevGraphText) return newGraphText;
-
-      return JSON.stringify(
-        diffRawGraphs(JSON.parse(prevGraphText), JSON.parse(newGraphText))
-      );
-    });
+  // Ses graphText and also clears the highlights and proposed next version.
+  // Used for completely loading a new graph.
+  const loadGraphText = (newGraphText: string) => {
+    setGraphText(newGraphText);
+    setHighlightIds([]);
+    setStagedGraphText("");
   };
+
+  // Computed value: whether there are staged changes
+
+  // Computed value: the current graphText with any changes merged.
+  const mergedGraphText = stagedGraphText
+    ? JSON.stringify(
+        diffRawGraphs(JSON.parse(graphText), JSON.parse(stagedGraphText))
+      )
+    : graphText;
 
   // Callback when Nodes or Edges are pressed.
   const handleElementPress = (id: string) => {
@@ -111,12 +119,29 @@ export const GraphChat: React.FC = () => {
       // console.log(responseObject);
       // TODO: type assertion
       if (responseObject.graph)
-        setGraphText(JSON.stringify(responseObject.graph));
+        if (graphText) {
+          // TODO: if yolo mode, setGraphText instead.
+          setHighlightIds([]);
+          setStagedGraphText(JSON.stringify(responseObject.graph));
+        } else {
+          loadGraphText(JSON.stringify(responseObject.graph));
+        }
       if (responseObject.highlightIds)
         setHighlightIds(responseObject.highlightIds);
     } catch (e) {
       console.error(e);
     }
+  };
+
+  // Callback for the "Accept all changes" button being clicked in merge mode.
+  const handleAcceptAllChangesClick = () => {
+    setGraphText(stagedGraphText);
+    setStagedGraphText("");
+  };
+
+  // Callback for the "Reject all changes" button being clicked in merge mode.
+  const handleRejectAllChangesClick = () => {
+    setStagedGraphText("");
   };
 
   // Callback for the "Save" button being clicked on the current active project canvas.
@@ -155,7 +180,7 @@ export const GraphChat: React.FC = () => {
               justifyContent="start"
               size="sm"
               onClick={() => {
-                setGraphText(project.graphText);
+                loadGraphText(project.graphText);
                 setHighlightIds([]);
               }}
             >
@@ -180,7 +205,7 @@ export const GraphChat: React.FC = () => {
                 justifyContent="start"
                 size="sm"
                 onClick={() => {
-                  setGraphText(JSON.stringify(example.graph));
+                  loadGraphText(JSON.stringify(example.graph));
                   setHighlightIds([]);
                 }}
               >
@@ -192,11 +217,11 @@ export const GraphChat: React.FC = () => {
       </UI.Stack>
       <UI.Stack key="graph-canvas-area" alignItems="stretch" flex={1} gap={0}>
         <UI.Flex flex={1} position="relative" h={0} alignItems="stretch">
-          {graphText ? (
+          {mergedGraphText ? (
             <UI.Flex flex={1} alignItems="stretch" p={4}>
               <GraphView
-                key={graphText}
-                graphText={graphText}
+                key={mergedGraphText}
+                graphText={mergedGraphText}
                 highlightIds={highlightIds}
                 onElementPress={handleElementPress}
               />
@@ -211,11 +236,41 @@ export const GraphChat: React.FC = () => {
             </UI.Flex>
           ) : null}
         </UI.Flex>
-        <ChatInput
-          value={chatInputValue}
-          onValueChange={setChatInputValue}
-          onSendButtonClick={handleSendButtonClick}
-        />
+        <UI.Box position="relative">
+          <ChatInput
+            value={chatInputValue}
+            onValueChange={setChatInputValue}
+            onSendButtonClick={handleSendButtonClick}
+          />
+          {stagedGraphText ? (
+            <UI.Flex
+              position="absolute"
+              bg="blackAlpha.800"
+              alignItems="center"
+              justifyContent="center"
+              inset={0}
+            >
+              <UI.Stack>
+                <UI.Stack direction="row">
+                  <UI.Button
+                    colorPalette="green"
+                    onClick={handleAcceptAllChangesClick}
+                    variant="outline"
+                  >
+                    Accept all changes
+                  </UI.Button>
+                  <UI.Button
+                    colorPalette="red"
+                    onClick={handleRejectAllChangesClick}
+                    variant="outline"
+                  >
+                    Reject all changes
+                  </UI.Button>
+                </UI.Stack>
+              </UI.Stack>
+            </UI.Flex>
+          ) : null}
+        </UI.Box>
       </UI.Stack>
     </UI.HStack>
   );
