@@ -1,6 +1,9 @@
 "use server";
 
 import OpenAI from "openai";
+import { zodTextFormat } from "openai/helpers/zod";
+import { AiGraphingResponse, aiGraphingResponseSchema } from "./types";
+
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -88,8 +91,10 @@ const sample = {
   highlightIds: ["food", "apple", "e-apple-appleTree", "appleTree", "orchard"],
 };
 
-export const createGraphingResponse = async (message: string) => {
-  const response = await client.responses.create({
+export const createGraphingResponse = async (
+  message: string
+): Promise<AiGraphingResponse | null> => {
+  const response = await client.responses.parse({
     model: "gpt-4.1",
     instructions: `
       You are an expert in modeling domain systems, diagramming them in collaboration with users, and facilitating understanding with users.
@@ -109,7 +114,10 @@ export const createGraphingResponse = async (message: string) => {
       ${JSON.stringify(sample)}
     `,
     input: message,
+    text: {
+      format: zodTextFormat(aiGraphingResponseSchema, "aiGraphingResponse"),
+    },
   });
 
-  return response.output_text;
+  return response.output_parsed;
 };

@@ -12,7 +12,6 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
 import { diffRawGraphs } from "../utils/diffRawGraphs";
-import { RawGraph } from "../utils/types";
 
 const TESTING = true;
 
@@ -110,24 +109,22 @@ export const GraphChat: React.FC = () => {
     const response = await createGraphingResponse(
       [chatInputValue, graphText].join(" ")
     );
+    if (!response) return;
+
     console.log(response);
     try {
-      const responseObject = JSON.parse(response) as {
-        graph: RawGraph;
-        highlightIds: string[];
-      };
-      // console.log(responseObject);
-      // TODO: type assertion
-      if (responseObject.graph)
+      if (response.graph) {
         if (graphText) {
           // TODO: if yolo mode, setGraphText instead.
           setHighlightIds([]);
-          setStagedGraphText(JSON.stringify(responseObject.graph));
+          setStagedGraphText(JSON.stringify(response.graph));
         } else {
-          loadGraphText(JSON.stringify(responseObject.graph));
+          loadGraphText(JSON.stringify(response.graph));
         }
-      if (responseObject.highlightIds)
-        setHighlightIds(responseObject.highlightIds);
+      }
+      if (response.highlightIds) {
+        setHighlightIds(response.highlightIds);
+      }
     } catch (e) {
       console.error(e);
     }

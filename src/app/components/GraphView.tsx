@@ -38,7 +38,7 @@ const convertRawGraphToElk = (graph: RawGraph) => {
         "elk.nodeLabels.placement": "INSIDE V_TOP H_CENTER",
       },
       children: convertRawGraphNodeByIdToElkNodeChildren(graph.nodes),
-      edges: graph.edges.map((edge) => {
+      edges: graph.edges?.map((edge) => {
         return {
           ...edge,
           labels: edge.label

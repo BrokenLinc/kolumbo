@@ -3,6 +3,7 @@ import {
   ElkExtendedEdge,
   ElkNode,
 } from "elkjs/lib/elk.bundled.js";
+import { z } from "zod";
 
 export type DiffType = "add" | "remove" | "change";
 
@@ -19,21 +20,37 @@ export type RawGraphEntity = {
   id: string;
 };
 
-export type RawGraphNode = RawGraphEntity & {
-  data?: NodeData;
-  label: string;
-  parentId?: string;
-};
+export const rawGraphNodeSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  parentId: z.string().nullish(),
+});
+export type RawGraphNode = z.infer<typeof rawGraphNodeSchema>;
 
-export type RawGraphEdge = RawGraphEntity & {
-  data?: EdgeData;
-  source: string;
-  target: string;
-  label?: string;
-  arrow?: "none" | "source-to-target" | "target-to-source" | "two-way";
-};
+export const rawGraphEdgeSchema = z.object({
+  id: z.string(),
+  source: z.string(),
+  target: z.string(),
+  label: z.string().nullish(),
+  arrow: z
+    .union([
+      z.literal("none"),
+      z.literal("source-to-target"),
+      z.literal("target-to-source"),
+      z.literal("two-way"),
+    ])
+    .nullish(),
+});
+export type RawGraphEdge = z.infer<typeof rawGraphEdgeSchema>;
 
-export type RawGraph = {
-  nodes: RawGraphNode[];
-  edges: RawGraphEdge[];
-};
+export const rawGraphSchema = z.object({
+  nodes: z.array(rawGraphNodeSchema),
+  edges: z.array(rawGraphEdgeSchema).nullish(),
+});
+export type RawGraph = z.infer<typeof rawGraphSchema>;
+
+export const aiGraphingResponseSchema = z.object({
+  graph: rawGraphSchema.nullish().nullish(),
+  highlightIds: z.array(z.string()).nullish(),
+});
+export type AiGraphingResponse = z.infer<typeof aiGraphingResponseSchema>;
