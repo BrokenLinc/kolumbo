@@ -101,7 +101,11 @@ export const GraphChat: React.FC = () => {
     });
   };
 
-  // console.log(graphText);
+  // console.log(zodTextFormat(aiGraphingResponseSchema, "aiGraphingResponse"));
+
+  console.log("graphText", graphText);
+  console.log("stagedGraphText", stagedGraphText);
+  console.log("mergedGraphText", mergedGraphText);
 
   // Callback for the chat-style form's submit button being pressed.
   const handleSendButtonClick = async () => {

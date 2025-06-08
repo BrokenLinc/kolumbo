@@ -33,12 +33,7 @@ export const rawGraphEdgeSchema = z.object({
   target: z.string(),
   label: z.string().nullish(),
   arrow: z
-    .union([
-      z.literal("none"),
-      z.literal("source-to-target"),
-      z.literal("target-to-source"),
-      z.literal("two-way"),
-    ])
+    .enum(["none", "source-to-target", "target-to-source", "two-way"])
     .nullish(),
 });
 export type RawGraphEdge = z.infer<typeof rawGraphEdgeSchema>;
@@ -49,8 +44,9 @@ export const rawGraphSchema = z.object({
 });
 export type RawGraph = z.infer<typeof rawGraphSchema>;
 
+// https://platform.openai.com/docs/guides/structured-outputs#supported-schemas
 export const aiGraphingResponseSchema = z.object({
-  graph: rawGraphSchema.nullish().nullish(),
+  graph: rawGraphSchema.nullish(),
   highlightIds: z.array(z.string()).nullish(),
 });
 export type AiGraphingResponse = z.infer<typeof aiGraphingResponseSchema>;

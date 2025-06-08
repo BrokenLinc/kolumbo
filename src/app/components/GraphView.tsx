@@ -27,45 +27,47 @@ const colorScheme = "blue";
  * A function that takes in the minimal RawGraph data structure and produces a complete ElkNode graph.
  */
 const convertRawGraphToElk = (graph: RawGraph) => {
-  return elk
-    .layout({
-      id: "root",
-      layoutOptions: {
-        "elk.direction": "DOWN",
-        "elk.algorithm": "layered", // recommend "layered' or "mrtree"
-        "elk.hierarchyHandling": "INCLUDE_CHILDREN", // support edges crosses container boundaries
-        "elk.layered.spacing.nodeNodeBetweenLayers": "40",
-        "elk.nodeLabels.placement": "INSIDE V_TOP H_CENTER",
-      },
-      children: convertRawGraphNodeByIdToElkNodeChildren(graph.nodes),
-      edges: graph.edges?.map((edge) => {
-        return {
-          ...edge,
-          labels: edge.label
-            ? [
-                {
-                  text: edge.label,
-                  // Set a standard size for Edge labels.
-                  width: Math.max(snapUp(20 + edge.label.length * 7), 60),
-                  height: 30,
-                  // Position the label centered, overlaid on the line.
-                  layoutOptions: {
-                    inline: "true",
-                    placement: "CENTER",
-                  },
+  const mappedGraph = {
+    id: "root",
+    layoutOptions: {
+      "elk.direction": "DOWN",
+      "elk.algorithm": "layered", // recommend "layered' or "mrtree"
+      "elk.hierarchyHandling": "INCLUDE_CHILDREN", // support edges crosses container boundaries
+      "elk.layered.spacing.nodeNodeBetweenLayers": "40",
+      "elk.nodeLabels.placement": "INSIDE V_TOP H_CENTER",
+    },
+    children: convertRawGraphNodeByIdToElkNodeChildren(graph.nodes),
+    edges: graph.edges?.map((edge) => {
+      return {
+        ...edge,
+        labels: edge.label
+          ? [
+              {
+                text: edge.label,
+                // Set a standard size for Edge labels.
+                width: Math.max(snapUp(20 + edge.label.length * 7), 60),
+                height: 30,
+                // Position the label centered, overlaid on the line.
+                layoutOptions: {
+                  inline: "true",
+                  placement: "CENTER",
                 },
-              ]
-            : undefined,
-          id: edge.id,
-          sources: [edge.source],
-          targets: [edge.target],
-          layoutOptions: {
-            thickness: "60",
-          },
-        };
-      }),
-    })
-    .catch(console.error);
+              },
+            ]
+          : undefined,
+        id: edge.id,
+        sources: [edge.source],
+        targets: [edge.target],
+        layoutOptions: {
+          thickness: "60",
+        },
+      };
+    }),
+  };
+
+  console.log("mappedGraph", mappedGraph);
+
+  return elk.layout(mappedGraph).catch(console.error);
 };
 
 /**
@@ -76,9 +78,13 @@ const convertRawGraphNodeByIdToElkNodeChildren = (
   parentNodeId?: string
 ): GraphNode[] => {
   return nodes
-    .filter((node) => node.parentId === parentNodeId)
+    .filter((node) => {
+      return (
+        (!node.parentId && !parentNodeId) || node.parentId === parentNodeId
+      );
+    })
     .map((node) => ({
-      ...node,
+      id: node.id,
       children: convertRawGraphNodeByIdToElkNodeChildren(nodes, node.id),
       labels: node.label
         ? [{ text: node.label, width: node.label.length * 8, height: 14 }]
