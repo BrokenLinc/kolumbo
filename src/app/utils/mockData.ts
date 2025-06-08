@@ -66,3 +66,81 @@ export const test_family: RawGraph = {
     { id: "e57", source: "5", target: "7", label: "father" },
   ],
 };
+
+export const test_orchard = {
+  nodes: [
+    {
+      id: "clerk",
+      label: "Clerk",
+    },
+    {
+      id: "customer",
+      label: "Customer",
+    },
+    {
+      id: "food",
+      label: "Food",
+    },
+    {
+      id: "apple",
+      label: "Apple",
+      parentId: "food",
+    },
+    {
+      id: "orange",
+      label: "Orange",
+      parentId: "food",
+    },
+    {
+      id: "appleTree",
+      label: "Apple Tree",
+      parentId: "orchard",
+    },
+    {
+      id: "orangeTree",
+      label: "Orange Tree",
+      parentId: "orchard",
+    },
+    {
+      id: "orchard",
+      label: "Orchard",
+    },
+  ],
+  edges: [
+    {
+      id: "e-clerk-customer",
+      source: "clerk",
+      target: "customer",
+      label: "talks with",
+      arrow: "two-way",
+    },
+    {
+      id: "e-customer-food",
+      source: "customer",
+      target: "food",
+      label: "purchases",
+      arrow: "source-to-target",
+    },
+    {
+      id: "e-apple-orange",
+      source: "apple",
+      target: "orange",
+      label: "is not",
+      arrow: "none",
+    },
+    {
+      id: "e-apple-appleTree",
+      source: "apple",
+      target: "appleTree",
+      label: "grows",
+      arrow: "target-to-source",
+    },
+    {
+      id: "e-orange-orangeTree",
+      source: "orange",
+      target: "orangeTree",
+      label: "grows",
+      arrow: "target-to-source",
+    },
+  ],
+};

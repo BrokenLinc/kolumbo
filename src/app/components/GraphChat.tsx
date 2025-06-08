@@ -6,6 +6,7 @@ import {
   createGraphingResponse,
   test_animals,
   test_family,
+  test_orchard,
   test_snacks,
 } from "@@utils";
 import { useLocalStorage } from "@uidotdev/usehooks";
@@ -18,6 +19,7 @@ const TESTING = true;
 const examples = [
   { id: "Animals", graph: test_animals },
   { id: "Family", graph: test_family },
+  { id: "Orchard", graph: test_orchard },
   { id: "Snacks", graph: test_snacks },
 ];
 
@@ -77,8 +79,6 @@ export const GraphChat: React.FC = () => {
     setHighlightIds([]);
     setStagedGraphText("");
   };
-
-  // Computed value: whether there are staged changes
 
   // Computed value: the current graphText with any changes merged.
   const mergedGraphText = stagedGraphText

@@ -27,6 +27,23 @@ const colorScheme = "blue";
  * A function that takes in the minimal RawGraph data structure and produces a complete ElkNode graph.
  */
 const convertRawGraphToElk = (graph: RawGraph) => {
+  // Remove edges that connect children directly to parents.
+  // We try to avoid this in the agent instructions, but it can happen.
+  const cleanGraph = {
+    ...graph,
+    edges: graph.edges?.filter((edge) => {
+      const sourceNode = graph.nodes.find((node) => node.id === edge.source);
+      const targetNode = graph.nodes.find((node) => node.id === edge.target);
+      if (
+        edge.target === sourceNode?.parentId ||
+        edge.source === targetNode?.parentId
+      ) {
+        return false;
+      }
+      return true;
+    }),
+  };
+
   const mappedGraph = {
     id: "root",
     layoutOptions: {
