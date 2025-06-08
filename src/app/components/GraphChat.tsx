@@ -13,6 +13,7 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
 import { diffRawGraphs } from "../utils/diffRawGraphs";
+import { useChatLog } from "../utils/useChatLog";
 
 const TESTING = true;
 
@@ -63,6 +64,7 @@ const useProjects = () => {
  */
 export const GraphChat: React.FC = () => {
   const projects = useProjects();
+  const chatLog = useChatLog();
   // The current active graph text (a raw string containing JSON).
   const [graphText, setGraphText] = React.useState("");
   // The string value holding the proposed next graph iteration.
@@ -78,6 +80,7 @@ export const GraphChat: React.FC = () => {
     setGraphText(newGraphText);
     setHighlightIds([]);
     setStagedGraphText("");
+    chatLog.clear();
   };
 
   // Computed value: the current graphText with any changes merged.
@@ -111,11 +114,14 @@ export const GraphChat: React.FC = () => {
   const handleSendButtonClick = async () => {
     // Send the user's text input, and receive response text from the "graphing" AI service.
     const response = await createGraphingResponse(
-      [chatInputValue, graphText].join(" ")
+      [
+        chatInputValue,
+        graphText || "Editor's note: Please create a new graph from scratch.",
+      ].join(" ")
     );
     if (!response) return;
 
-    console.log(response);
+    // console.log(response);
     try {
       if (response.graph) {
         if (graphText) {
@@ -126,9 +132,15 @@ export const GraphChat: React.FC = () => {
           loadGraphText(JSON.stringify(response.graph));
         }
       }
+
       if (response.highlightIds) {
         setHighlightIds(response.highlightIds);
       }
+
+      // Update chat state
+      chatLog.addEntry({ author: "user", message: chatInputValue });
+      chatLog.addEntry({ author: "agent", message: "TBD" });
+      setChatInputValue("");
     } catch (e) {
       console.error(e);
     }
